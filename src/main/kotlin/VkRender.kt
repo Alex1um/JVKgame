@@ -6,8 +6,11 @@ import org.lwjgl.vulkan.VkApplicationInfo
 import org.lwjgl.vulkan.VkInstance
 import org.lwjgl.vulkan.VkInstanceCreateInfo
 import org.lwjgl.glfw.GLFWVulkan.*
-import org.lwjgl.vulkan.VK13.vkEnumeratePhysicalDevices
 import org.lwjgl.vulkan.*
+import java.io.BufferedInputStream
+import java.io.DataInputStream
+import java.io.File
+import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
 import java.nio.LongBuffer
@@ -33,16 +36,22 @@ class VkRender {
     private lateinit var queue_props: VkQueueFamilyProperties.Buffer
     private lateinit var graphicsQueue: VkQueue
     private val KHR_swapchain = MemoryUtil.memASCII(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME)
-//    private lateinit var surfaceFormat: VkSurfaceFormatKHR
-//    private var presentMode by Delegates.notNull<Int>()
-//    private lateinit var extent: VkExtent2D
     private var imageCount by Delegates.notNull<Int>()
     private var swapChain: Long = 0
-//    private var swapChainImageCount by Delegates.notNull<Int>()
     private lateinit var swapChainImages: LongBuffer;
     private var swapChainImageFormat by Delegates.notNull<Int>()
     private lateinit var swapChainExtent: VkExtent2D
     private lateinit var swapChainImageViews: LongArray
+    private var renderPass by Delegates.notNull<Long>()
+    private var pipelineLayout by Delegates.notNull<Long>()
+    private var graphicsPipeLine by Delegates.notNull<Long>()
+    private lateinit var swapChainFramebuffers: LongArray
+    private var commandPool by Delegates.notNull<Long>()
+    private lateinit var commandBuffer: VkCommandBuffer
+    private var imageAvailableSemaphore by Delegates.notNull<Long>()
+    private var renderFinishedSemaphore by Delegates.notNull<Long>()
+    private var inFlightFence by Delegates.notNull<Long>()
+
 
     inner class QueueFamilyIndices(stack: MemoryStack, physicalDevice: VkPhysicalDevice) {
         var graphicsFamily: Int? = null
@@ -55,6 +64,7 @@ class VkRender {
 
             val supportsPresent = stack.mallocInt(tmp_queue_props.capacity())
             for (i in 0 until  tmp_queue_props.capacity()) {
+                supportsPresent.position(i)
                 KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, supportsPresent)
                 if (supportsPresent[i] == VK_TRUE) {
                     presentFamily = i
@@ -172,6 +182,382 @@ class VkRender {
         createLogicalDevice()
         createSwapChain()
         createImageViews()
+        createRenderPass()
+        createGraphicsPipeline()
+        createFrameBuffers()
+        createCommandPool()
+        createCommandBuffer()
+        createSyncObjects()
+    }
+
+    private fun createSyncObjects() {
+        MemoryStack.stackPush().use { stack ->
+
+            val semaphore = VkSemaphoreCreateInfo.malloc(stack)
+                .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
+                .pNext(MemoryUtil.NULL)
+                .flags(0)
+
+            val fenceInfo = VkFenceCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
+                .flags(VK_FENCE_CREATE_SIGNALED_BIT)
+                .pNext(MemoryUtil.NULL)
+
+            if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create semaphore!")
+            }
+            imageAvailableSemaphore = lp[0]
+            if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create semaphore!")
+            }
+            renderFinishedSemaphore = lp[0]
+            if (vkCreateFence(device, fenceInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create fence!")
+            }
+            inFlightFence = lp[0]
+        }
+    }
+
+    private fun recordCommandBuffer(commandBuffer: VkCommandBuffer, imageIndex: Int) {
+        MemoryStack.stackPush().use { stack ->
+            val beginInfo = VkCommandBufferBeginInfo.malloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                .pNext(MemoryUtil.NULL)
+                .flags(0)
+                .pInheritanceInfo(null)
+
+            if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                throw IllegalStateException("failed to begin recording command buffer!");
+            }
+
+            val clearColor = VkClearValue.calloc(1, stack)
+            clearColor[0].color()
+                .float32(0, 0.0f)
+                .float32(1, 0.0f)
+                .float32(2, 0.0f)
+                .float32(3, 1.0f)
+
+            val renderPassInfo = VkRenderPassBeginInfo.malloc(stack)
+                .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                .renderPass(renderPass)
+                .framebuffer(swapChainFramebuffers[imageIndex])
+                .renderArea {
+                    it.offset {
+                        it.x(0)
+                            .y(0)
+                    }
+                    it.extent {
+                        it.width(width)
+                            .height(height)
+                    }
+                }
+                .clearValueCount(1)
+                .pClearValues(clearColor)
+                .pNext(MemoryUtil.NULL)
+
+            vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE)
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeLine)
+
+            val viewport = VkViewport.calloc(1, stack)
+                .x(0.0f)
+                .y(0.0f)
+                .width(width.toFloat())
+                .height(height.toFloat())
+                .minDepth(0.0f)
+                .maxDepth(1.0f)
+
+            vkCmdSetViewport(commandBuffer, 0, viewport)
+
+            val scissor = VkRect2D.calloc(1, stack)
+                .offset {
+                    it.x(0)
+                        .y(0)
+                }
+//                .extent(swapChainExtent)
+                .extent {
+                    it.width(width)
+                        .height(height)
+                }
+
+            vkCmdSetScissor(commandBuffer, 0, scissor)
+
+            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+            vkCmdEndRenderPass(commandBuffer)
+            if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                throw IllegalStateException("failed to record command buffer")
+            }
+        }
+    }
+    private fun createCommandBuffer() {
+        MemoryStack.stackPush().use { stack ->
+            val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                .commandPool(commandPool)
+                .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                .commandBufferCount(1)
+
+            if (vkAllocateCommandBuffers(device, allocInfo, pp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to allocate command buffers!");
+            }
+            commandBuffer = VkCommandBuffer(pp[0], device)
+        }
+    }
+
+    private fun createCommandPool() {
+        MemoryStack.stackPush().use { stack ->
+            val indices = QueueFamilyIndices(stack, physicalDevice)
+            val poolInfo = VkCommandPoolCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO)
+                .flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)
+                .queueFamilyIndex(indices.graphicsFamily!!)
+
+            if (vkCreateCommandPool(device, poolInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create command pool!")
+            }
+            commandPool = lp[0]
+        }
+    }
+
+    private fun createFrameBuffers() {
+        swapChainFramebuffers = LongArray(swapChainImageViews.size)
+        MemoryStack.stackPush().use { stack ->
+            for (i in swapChainImageViews.indices) {
+                val attachments = stack.longs(swapChainImageViews[i])
+
+                val framebufferInfo = VkFramebufferCreateInfo.calloc(stack)
+                    .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
+                    .renderPass(renderPass)
+                    .attachmentCount(1)
+                    .pAttachments(attachments)
+                    .width(width)
+                    .height(height)
+                    .layers(1)
+
+                if (vkCreateFramebuffer(device, framebufferInfo, null, lp) != VK_SUCCESS) {
+                    throw IllegalStateException("failed to create framebuffer")
+                }
+                swapChainFramebuffers[i] = lp[0]
+            }
+        }
+    }
+
+    private fun createRenderPass() {
+        MemoryStack.stackPush().use { stack ->
+            val colorAttachment = VkAttachmentDescription.calloc(1, stack)
+                .format(swapChainImageFormat)
+                .samples(VK_SAMPLE_COUNT_1_BIT)
+                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+                .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                .finalLayout(KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+
+            val colorAttachmentRef = VkAttachmentReference.calloc(1, stack)
+                .attachment(0)
+                .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+
+            val subpass = VkSubpassDescription.calloc(1, stack)
+                .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                .colorAttachmentCount(1)
+                .pColorAttachments(colorAttachmentRef)
+
+
+            val dependency = VkSubpassDependency.calloc(1, stack)
+                .srcSubpass(VK_SUBPASS_EXTERNAL)
+                .dstSubpass(0)
+                .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                .srcAccessMask(0)
+                .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+
+            val renderPassInfo = VkRenderPassCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+                .pAttachments(colorAttachment)
+                .pSubpasses(subpass)
+                .pDependencies(dependency)
+
+
+            if (vkCreateRenderPass(device, renderPassInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create render pass")
+            }
+            renderPass = lp[0]
+        }
+    }
+
+    private fun readShader(filename: String): ByteArray {
+        with(File(filename)) {
+            return this.readBytes()
+        }
+    }
+
+    private fun createShaderModule(code: ByteArray): Long {
+        MemoryStack.stackPush().use { stack ->
+            val pCode = MemoryUtil.memAlloc(code.size).put(code)
+            pCode.flip()
+            val createInfo = VkShaderModuleCreateInfo.malloc(stack)
+                .sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
+                .pCode(pCode)
+                .flags(0)
+                .pNext(MemoryUtil.NULL)
+            val rt = vkCreateShaderModule(device, createInfo, null, lp)
+            if (rt != VK_SUCCESS) {
+                throw IllegalStateException("failed to create shader module!")
+            }
+            MemoryUtil.memFree(pCode)
+            return lp[0]
+        }
+    }
+    private fun createGraphicsPipeline() {
+        val vertShaderCode = readShader("build/resources/main/shaders/vert.spv")
+        val fragShaderCode = readShader("build/resources/main/shaders/frag.spv")
+
+        val vertShaderModule = createShaderModule(vertShaderCode)
+        val fragShaderModule = createShaderModule(fragShaderCode)
+
+        MemoryStack.stackPush().use { stack ->
+            val shaderStagesInfo = VkPipelineShaderStageCreateInfo.calloc(2, stack)
+
+            val main = stack.UTF8("main")
+
+            shaderStagesInfo[0]
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+                .stage(VK_SHADER_STAGE_VERTEX_BIT)
+                .module(vertShaderModule)
+                .pName(main)
+            shaderStagesInfo[1]
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+                .stage(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .module(fragShaderModule)
+                .pName(main)
+
+            val dynamicStates = stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR)
+
+            val dynamicState = VkPipelineDynamicStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
+                .pDynamicStates(dynamicStates)
+
+
+            val vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc()
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+                .pVertexBindingDescriptions(null)
+                .pVertexAttributeDescriptions(null)
+
+            val inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
+                .topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                .primitiveRestartEnable(false)
+
+            val viewPort = VkViewport.calloc(1, stack)
+                .x(0.0f)
+                .y(0.0f)
+                .width(width.toFloat())
+                .height(height.toFloat())
+                .minDepth(0.0f)
+                .maxDepth(1.0f)
+
+            val scissor = VkRect2D.calloc(1, stack)
+                .offset{
+                    it.x(0)
+                        .y(0)
+                }
+//                .extent(swapChainExtent)
+                .extent {
+                    it.width(width)
+                        .height(height)
+                }
+
+            val viewportState = VkPipelineViewportStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO)
+                .viewportCount(1)
+                .scissorCount(1)
+                .pScissors(scissor)
+                .pViewports(viewPort)
+
+            val rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO)
+                .depthClampEnable(false)
+                .rasterizerDiscardEnable(false)
+                .polygonMode(VK_POLYGON_MODE_FILL)
+                .lineWidth(1.0f)
+                .cullMode(VK_CULL_MODE_BACK_BIT)
+                .frontFace(VK_FRONT_FACE_CLOCKWISE)
+                .depthBiasEnable(false)
+                .depthBiasConstantFactor(0.0f)
+                .depthBiasClamp(0.0f)
+                .depthBiasSlopeFactor(0.0f)
+
+            val multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
+                .sampleShadingEnable(false)
+                .rasterizationSamples(VK_SAMPLE_COUNT_1_BIT)
+                .minSampleShading(1.0f)
+                .pSampleMask(null)
+                .alphaToCoverageEnable(false)
+                .alphaToOneEnable(false)
+
+            val colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack)
+                .colorWriteMask(VK_COLOR_COMPONENT_A_BIT or VK_COLOR_COMPONENT_B_BIT or VK_COLOR_COMPONENT_G_BIT or VK_COLOR_COMPONENT_R_BIT)
+//                .blendEnable(false)
+//                .srcColorBlendFactor(VK_BLEND_FACTOR_ONE)
+//                .dstColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+//                .colorBlendOp(VK_BLEND_OP_ADD)
+//                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
+//                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+//                .alphaBlendOp(VK_BLEND_OP_ADD)
+                .blendEnable(true)
+                .srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA)
+                .dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+                .colorBlendOp(VK_BLEND_OP_ADD)
+                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
+                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .alphaBlendOp(VK_BLEND_OP_ADD)
+
+            val colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
+                .logicOpEnable(false)
+                .logicOp(VK_LOGIC_OP_COPY)
+                .pAttachments(colorBlendAttachment)
+                .blendConstants(0, 0.0f)
+                .blendConstants(1, 0.0f)
+                .blendConstants(2, 0.0f)
+                .blendConstants(3, 0.0f)
+
+            val pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
+                .pSetLayouts(null)
+                .pPushConstantRanges(null)
+
+            if (vkCreatePipelineLayout(device, pipelineLayoutInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create pipeline layout!")
+            }
+            pipelineLayout = lp[0]
+
+            val pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack)
+                .sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
+                .pStages(shaderStagesInfo)
+                .pVertexInputState(vertexInputInfo)
+                .pInputAssemblyState(inputAssembly)
+                .pViewportState(viewportState)
+                .pRasterizationState(rasterizer)
+                .pMultisampleState(multisampling)
+                .pDepthStencilState(null)
+                .pColorBlendState(colorBlending)
+                .pDynamicState(dynamicState)
+                .layout(pipelineLayout)
+                .renderPass(renderPass)
+                .subpass(0)
+                .basePipelineHandle(VK_NULL_HANDLE)
+                .basePipelineIndex(-1)
+
+            if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, pipelineInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create graphics pipeline")
+            }
+            graphicsPipeLine = lp[0]
+        }
+
+        vkDestroyShaderModule(device, vertShaderModule, null)
+        vkDestroyShaderModule(device, fragShaderModule, null)
     }
 
     private fun createImageViews() {
@@ -195,6 +581,7 @@ class VkRender {
                         it.levelCount(1)
                         it.baseArrayLayer(0)
                         it.levelCount(1)
+                        it.layerCount(1)
                     }
                 if (vkCreateImageView(device, createInfo, null, lp) != VK_SUCCESS) {
                     throw IllegalStateException("failed to create image views!")
@@ -217,7 +604,7 @@ class VkRender {
                 imageCount = details.capabilities.maxImageCount()
             }
 
-            val createInfo = VkSwapchainCreateInfoKHR.calloc(stack)
+            var createInfo = VkSwapchainCreateInfoKHR.calloc(stack)
                 .sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                 .surface(surface)
                 .minImageCount(imageCount)
@@ -227,14 +614,26 @@ class VkRender {
                 .imageArrayLayers(1)
                 // TODO: to separate image
                 .imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-                .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
-                .queueFamilyIndexCount(0)
-                .pQueueFamilyIndices(null)
                 .preTransform(details.capabilities.currentTransform())
                 .compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                 .presentMode(presentMode)
                 .clipped(true)
                 .oldSwapchain(swapChain)
+
+            val indices = QueueFamilyIndices(stack, physicalDevice)
+            if (indices.graphicsFamily != indices.presentFamily) {
+                val b = IntBuffer.allocate(2)
+                b.put(indices.graphicsFamily!!)
+                b.put(indices.presentFamily!!)
+                createInfo = createInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT)
+                    .queueFamilyIndexCount(2)
+                    .pQueueFamilyIndices(b)
+            } else {
+
+                createInfo = createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
+                    .queueFamilyIndexCount(0)
+                    .pQueueFamilyIndices(null)
+            }
 
             if (KHRSwapchain.vkCreateSwapchainKHR(device, createInfo, null, lp) != VK_SUCCESS) {
                 throw IllegalStateException("Failed to create swap chain")
@@ -301,14 +700,27 @@ class VkRender {
         MemoryStack.stackPush().use { stack ->
 
             val indices = QueueFamilyIndices(stack, physicalDevice)
-            if (indices.graphicsFamily != indices.presentFamily) {
-                throw IllegalStateException("families are not same")
-            }
+//            if (indices.graphicsFamily != indices.presentFamily) {
+//                throw IllegalStateException("families are not same")
+//            }
 
-            val queue = VkDeviceQueueCreateInfo.calloc(/*Queue count: */1 , stack)
-                .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
-                .queueFamilyIndex(indices.graphicsFamily!!)
-                .pQueuePriorities(stack.floats(1.0f))
+            val queue = if (indices.graphicsFamily!! == indices.presentFamily!!) {
+                VkDeviceQueueCreateInfo.calloc(/*Queue count: */1, stack)
+                    .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                    .queueFamilyIndex(indices.graphicsFamily!!)
+                    .pQueuePriorities(stack.floats(1.0f))
+            } else {
+                val q = VkDeviceQueueCreateInfo.calloc(/*Queue count: */2, stack)
+                q
+                    .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                    .queueFamilyIndex(indices.graphicsFamily!!)
+                    .pQueuePriorities(stack.floats(1.0f))
+                q
+                    .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                    .queueFamilyIndex(indices.presentFamily!!)
+                    .pQueuePriorities(stack.floats(1.0f))
+                q
+            }
 
             val features = VkPhysicalDeviceFeatures.calloc(stack)
 
@@ -346,10 +758,14 @@ class VkRender {
                 .engineVersion(VK_MAKE_VERSION(0, 0, 1))
                 .apiVersion(VK_API_VERSION_1_3)
 
+            extensionNames.clear()
+            extensionNames.put(stack.ASCII("VK_LAYER_KHRONOS_validation"))
+            extensionNames.flip()
 
             var createInfo = VkInstanceCreateInfo.malloc(stack)
                 .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .pApplicationInfo(appInfo)
+                .ppEnabledLayerNames(extensionNames)
 
             val glfwExtensions = glfwGetRequiredInstanceExtensions()
                 ?: throw IllegalStateException("glfwGetRequiredInstanceExtensions failed to find the platform surface extensions.")
@@ -367,10 +783,68 @@ class VkRender {
     private fun mainLoop() {
         while (!glfwWindowShouldClose(window!!)) {
             glfwPollEvents()
+            drawFrame()
+        }
+
+        vkDeviceWaitIdle(device)
+    }
+
+    fun drawFrame() {
+        var imageIndex = 0;
+        MemoryStack.stackPush().use { stack ->
+            vkWaitForFences(device, inFlightFence, true, Long.MAX_VALUE)
+            vkResetFences(device, inFlightFence)
+            KHRSwapchain.vkAcquireNextImageKHR(
+                device,
+                swapChain,
+                Long.MAX_VALUE,
+                imageAvailableSemaphore,
+                VK_NULL_HANDLE,
+                ip
+            )
+            imageIndex = ip[0]
+            vkResetCommandBuffer(commandBuffer, 0)
+
+            recordCommandBuffer(commandBuffer, imageIndex)
+
+            val lp2 = stack.mallocLong(1)
+            val submitInfo = VkSubmitInfo.malloc(stack)
+                .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                .pNext(MemoryUtil.NULL)
+                .waitSemaphoreCount(1)
+                .pWaitSemaphores(lp.put(0, imageAvailableSemaphore))
+                .pWaitDstStageMask(ip.put(0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
+                .pCommandBuffers(pp.put(0, commandBuffer))
+                .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore))
+
+            if (vkQueueSubmit(graphicsQueue, submitInfo, inFlightFence) != VK_SUCCESS) {
+                throw IllegalStateException("failed to submit draw command buffer")
+            }
+
+            val presentInfo = VkPresentInfoKHR.malloc(stack)
+                .sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+                .pWaitSemaphores(lp2)
+                .swapchainCount(1)
+                .pSwapchains(lp.put(0, swapChain))
+                .pImageIndices(ip.put(0, imageIndex))
+                .pResults(null)
+
+            KHRSwapchain.vkQueuePresentKHR(graphicsQueue, presentInfo)
+
         }
     }
 
     private fun cleanup() {
+        vkDestroySemaphore(device, imageAvailableSemaphore, null)
+        vkDestroySemaphore(device, renderFinishedSemaphore, null)
+        vkDestroyFence(device, inFlightFence, null)
+        vkDestroyCommandPool(device, commandPool, null)
+        for (framebuffer in swapChainFramebuffers) {
+            vkDestroyFramebuffer(device, framebuffer, null)
+        }
+        vkDestroyPipeline(device, graphicsPipeLine, null)
+        vkDestroyPipelineLayout(device, pipelineLayout, null)
+        vkDestroyRenderPass(device, renderPass, null)
         for (e in swapChainImageViews) {
             vkDestroyImageView(device, e, null)
         }
