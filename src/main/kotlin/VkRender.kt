@@ -7,10 +7,7 @@ import org.lwjgl.vulkan.VkInstance
 import org.lwjgl.vulkan.VkInstanceCreateInfo
 import org.lwjgl.glfw.GLFWVulkan.*
 import org.lwjgl.vulkan.*
-import java.io.BufferedInputStream
-import java.io.DataInputStream
 import java.io.File
-import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
 import java.nio.LongBuffer
@@ -22,6 +19,9 @@ class VkRender {
     var window: Long? = null
     var height = 600
     var width = 800
+    private val MAX_FRAMES_IN_FLIGHT = 2
+    private var framebufferResized = false
+
     private val ip = MemoryUtil.memAllocInt(1)
     private val lp = MemoryUtil.memAllocLong(1)
     private val pp = MemoryUtil.memAllocPointer(1)
@@ -47,11 +47,11 @@ class VkRender {
     private var graphicsPipeLine by Delegates.notNull<Long>()
     private lateinit var swapChainFramebuffers: LongArray
     private var commandPool by Delegates.notNull<Long>()
-    private lateinit var commandBuffer: VkCommandBuffer
-    private var imageAvailableSemaphore by Delegates.notNull<Long>()
-    private var renderFinishedSemaphore by Delegates.notNull<Long>()
-    private var inFlightFence by Delegates.notNull<Long>()
-
+    private val commandBuffer: Array<VkCommandBuffer?> = arrayOfNulls(MAX_FRAMES_IN_FLIGHT)
+    private val imageAvailableSemaphore = LongArray(MAX_FRAMES_IN_FLIGHT)
+    private var renderFinishedSemaphore = LongArray(MAX_FRAMES_IN_FLIGHT)
+    private var inFlightFence = LongArray(MAX_FRAMES_IN_FLIGHT)
+    private var currentFrame = 0
 
     inner class QueueFamilyIndices(stack: MemoryStack, physicalDevice: VkPhysicalDevice) {
         var graphicsFamily: Int? = null
@@ -170,9 +170,12 @@ class VkRender {
         glfwInit()
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE)
 
         window = glfwCreateWindow(width, height, "Vulkan window", 0, 0)
+        glfwSetFramebufferSizeCallback(window!!) { window, width, height ->
+            framebufferResized = true
+        }
     }
 
     private fun initVulkan() {
@@ -206,15 +209,32 @@ class VkRender {
             if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
                 throw IllegalStateException("failed to create semaphore!")
             }
-            imageAvailableSemaphore = lp[0]
+            imageAvailableSemaphore[0] = lp[0]
+
             if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
                 throw IllegalStateException("failed to create semaphore!")
             }
-            renderFinishedSemaphore = lp[0]
+            imageAvailableSemaphore[1] = lp[0]
+
+            if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create semaphore!")
+            }
+            renderFinishedSemaphore[0] = lp[0]
+
+            if (vkCreateSemaphore(device, semaphore, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create semaphore!")
+            }
+            renderFinishedSemaphore[1] = lp[0]
+
             if (vkCreateFence(device, fenceInfo, null, lp) != VK_SUCCESS) {
                 throw IllegalStateException("failed to create fence!")
             }
-            inFlightFence = lp[0]
+            inFlightFence[0] = lp[0]
+
+            if (vkCreateFence(device, fenceInfo, null, lp) != VK_SUCCESS) {
+                throw IllegalStateException("failed to create fence!")
+            }
+            inFlightFence[1] = lp[0]
         }
     }
 
@@ -294,12 +314,16 @@ class VkRender {
                 .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
                 .commandPool(commandPool)
                 .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                .commandBufferCount(1)
+                .commandBufferCount(MAX_FRAMES_IN_FLIGHT)
 
-            if (vkAllocateCommandBuffers(device, allocInfo, pp) != VK_SUCCESS) {
+            val pp2 = stack.pointers(0, 0)
+
+            if (vkAllocateCommandBuffers(device, allocInfo, pp2) != VK_SUCCESS) {
                 throw IllegalStateException("failed to allocate command buffers!");
             }
-            commandBuffer = VkCommandBuffer(pp[0], device)
+            for (i in 0 until MAX_FRAMES_IN_FLIGHT) {
+                commandBuffer[i] = VkCommandBuffer(pp2[i], device)
+            }
         }
     }
 
@@ -505,6 +529,7 @@ class VkRender {
 //                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
 //                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
 //                .alphaBlendOp(VK_BLEND_OP_ADD)
+
                 .blendEnable(true)
                 .srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA)
                 .dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
@@ -789,35 +814,69 @@ class VkRender {
         vkDeviceWaitIdle(device)
     }
 
+    fun recreateSwapChain() {
+
+        vkDeviceWaitIdle(device)
+
+        MemoryStack.stackPush().use { stack ->
+            val ip2 = stack.ints(1)
+            glfwGetFramebufferSize(window!!, ip, ip2)
+            while (ip[0] == 0 || ip2[0] == 0) {
+                glfwGetFramebufferSize(window!!, ip, ip2)
+                glfwWaitEvents()
+            }
+            width = ip[0]
+            height = ip2[0]
+        }
+
+        vkDeviceWaitIdle(device)
+
+        cleanupSwapChain()
+
+        createSwapChain()
+        createImageViews()
+        createFrameBuffers()
+    }
+
     fun drawFrame() {
         var imageIndex = 0;
         MemoryStack.stackPush().use { stack ->
-            vkWaitForFences(device, inFlightFence, true, Long.MAX_VALUE)
-            vkResetFences(device, inFlightFence)
-            KHRSwapchain.vkAcquireNextImageKHR(
+            vkWaitForFences(device, inFlightFence[currentFrame], true, Long.MAX_VALUE)
+//            vkResetFences(device, inFlightFence)
+            var result = KHRSwapchain.vkAcquireNextImageKHR(
                 device,
                 swapChain,
                 Long.MAX_VALUE,
-                imageAvailableSemaphore,
+                imageAvailableSemaphore[currentFrame],
                 VK_NULL_HANDLE,
                 ip
             )
-            imageIndex = ip[0]
-            vkResetCommandBuffer(commandBuffer, 0)
 
-            recordCommandBuffer(commandBuffer, imageIndex)
+            if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
+                recreateSwapChain()
+                return;
+            } else if (result != VK_SUCCESS && result != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                throw IllegalStateException("failed to aquire swap chain image!")
+            }
+
+            vkResetFences(device, inFlightFence[currentFrame])
+
+            imageIndex = ip[0]
+            vkResetCommandBuffer(commandBuffer[currentFrame]!!, 0)
+
+            recordCommandBuffer(commandBuffer[currentFrame]!!, imageIndex)
 
             val lp2 = stack.mallocLong(1)
             val submitInfo = VkSubmitInfo.malloc(stack)
                 .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
                 .pNext(MemoryUtil.NULL)
                 .waitSemaphoreCount(1)
-                .pWaitSemaphores(lp.put(0, imageAvailableSemaphore))
+                .pWaitSemaphores(lp.put(0, imageAvailableSemaphore[currentFrame]))
                 .pWaitDstStageMask(ip.put(0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
-                .pCommandBuffers(pp.put(0, commandBuffer))
-                .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore))
+                .pCommandBuffers(pp.put(0, commandBuffer[currentFrame]!!))
+                .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore[currentFrame]))
 
-            if (vkQueueSubmit(graphicsQueue, submitInfo, inFlightFence) != VK_SUCCESS) {
+            if (vkQueueSubmit(graphicsQueue, submitInfo, inFlightFence[currentFrame]) != VK_SUCCESS) {
                 throw IllegalStateException("failed to submit draw command buffer")
             }
 
@@ -829,15 +888,33 @@ class VkRender {
                 .pImageIndices(ip.put(0, imageIndex))
                 .pResults(null)
 
-            KHRSwapchain.vkQueuePresentKHR(graphicsQueue, presentInfo)
+            result = KHRSwapchain.vkQueuePresentKHR(graphicsQueue, presentInfo)
 
+            if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || result == KHRSwapchain.VK_SUBOPTIMAL_KHR || framebufferResized) {
+                framebufferResized = false
+                recreateSwapChain()
+            } else if (result != VK_SUCCESS) {
+                throw IllegalStateException("failed to present swap chain image!")
+            }
+            currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT
         }
     }
 
+    private fun cleanupSwapChain() {
+        for (framebuffer in swapChainFramebuffers) {
+            vkDestroyFramebuffer(device, framebuffer, null)
+        }
+        for (e in swapChainImageViews) {
+            vkDestroyImageView(device, e, null)
+        }
+        KHRSwapchain.vkDestroySwapchainKHR(device, swapChain, null)
+    }
     private fun cleanup() {
-        vkDestroySemaphore(device, imageAvailableSemaphore, null)
-        vkDestroySemaphore(device, renderFinishedSemaphore, null)
-        vkDestroyFence(device, inFlightFence, null)
+        for (i in 0 until MAX_FRAMES_IN_FLIGHT) {
+            vkDestroySemaphore(device, imageAvailableSemaphore[i], null)
+            vkDestroySemaphore(device, renderFinishedSemaphore[i], null)
+            vkDestroyFence(device, inFlightFence[i], null)
+        }
         vkDestroyCommandPool(device, commandPool, null)
         for (framebuffer in swapChainFramebuffers) {
             vkDestroyFramebuffer(device, framebuffer, null)
