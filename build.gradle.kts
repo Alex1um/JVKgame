@@ -6,6 +6,7 @@ plugins {
 group = "org.example"
 version = "1.0-SNAPSHOT"
 val lwjglVersion = "3.3.1"
+val `lwjgl3-awtVersion` = "0.1.8"
 val lwjglNatives = "natives-linux"
 
 repositories {
@@ -20,6 +21,7 @@ dependencies {
     implementation("org.lwjgl", "lwjgl")
     implementation("org.lwjgl", "lwjgl-assimp")
     implementation("org.lwjgl", "lwjgl-glfw")
+    implementation("org.lwjgl", "lwjgl-jawt")
     implementation("org.lwjgl", "lwjgl-openal")
     implementation("org.lwjgl", "lwjgl-stb")
     implementation("org.lwjgl", "lwjgl-vulkan")
@@ -28,6 +30,8 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-openal", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
+    implementation("org.lwjglx", "lwjgl3-awt", `lwjgl3-awtVersion`)
+
 }
 
 tasks.test {
