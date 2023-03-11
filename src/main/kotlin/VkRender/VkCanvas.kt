@@ -5,6 +5,8 @@ import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphore
 import VkRender.Sync.Semaphores
+import org.joml.Vector2f
+import org.joml.Vector3f
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.KHRSwapchain
@@ -17,7 +19,8 @@ import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.io.Closeable
 
-class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener, Closeable {
+class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
+    Closeable {
 
     lateinit var sfc: Surface
     lateinit var physicalDevice: PhysicalDevice
@@ -36,9 +39,19 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         private set
     lateinit var imageAvailableSemaphore: Semaphores
     lateinit var renderFinishedSemaphore: Semaphores
+    lateinit var vertexBuffer: VertexBuffer
 
     private var currentFrame = 0
     private var framebufferResized = false
+
+    private val vertices = arrayOf(
+        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 0f, 0f)),
+        Vertex(Vector2f(0f, -0.5f), Vector3f(1f, 1f, 0f)),
+        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
+        Vertex(Vector2f(-0f, 0.8f), Vector3f(1f, 0f, 0f)),
+        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
+        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
+    )
 
     override fun initVK() {
         addComponentListener(this)
@@ -51,14 +64,21 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         pipeline = GraphicsPipeline(device, renderPass, size.width, size.height)
         commands = CommandPool(device, physicalDevice)
 
-        inFlightFences = Fences(2, device)
+        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
 
-        imageAvailableSemaphore = Semaphores(2, device)
+        MemoryStack.stackPush().use { stack ->
+            inFlightFences = Fences(2, device, stack)
 
-        renderFinishedSemaphore = Semaphores(2, device)
+            imageAvailableSemaphore = Semaphores(2, device, stack)
+
+            renderFinishedSemaphore = Semaphores(2, device, stack)
+        }
     }
 
     override fun paintVK() {
+
+        println(1)
+
         var imageIndex = 0
         MemoryStack.stackPush().use { stack ->
             VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
@@ -89,7 +109,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-            commands.record(currentFrame, imageIndex, renderPass, pipeline, swapChain, size.width, size.height)
+            commands.record(currentFrame, imageIndex, renderPass, pipeline, swapChain, size.width, size.height, vertexBuffer)
 
             val lp2 = stack.mallocLong(1)
             val submitInfo = VkSubmitInfo.calloc(stack)
@@ -130,15 +150,12 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     }
 
     override fun componentMoved(p0: ComponentEvent?) {
-        TODO("Not yet implemented")
     }
 
     override fun componentShown(p0: ComponentEvent?) {
-        TODO("Not yet implemented")
     }
 
     override fun componentHidden(p0: ComponentEvent?) {
-        TODO("Not yet implemented")
     }
 
     override fun close() {

@@ -1,7 +1,6 @@
 package VkRender
 
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import java.io.Closeable
 
@@ -40,7 +39,7 @@ class CommandPool(private val ldevice: Device, pdevice: PhysicalDevice) : Closea
         }
     }
 
-    fun record(currentFrame: Int, imageIndex: Int, pass: RenderPass, pipeline: GraphicsPipeline, swapChain: SwapChain, width: Int, height: Int) {
+    fun record(currentFrame: Int, imageIndex: Int, pass: RenderPass, pipeline: GraphicsPipeline, swapChain: SwapChain, width: Int, height: Int, vertexBuffer: VertexBuffer) {
 
         MemoryStack.stackPush().use { stack ->
             val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
@@ -102,7 +101,11 @@ class CommandPool(private val ldevice: Device, pdevice: PhysicalDevice) : Closea
 
             VK13.vkCmdSetScissor(commandBuffer[currentFrame]!!, 0, scissor)
 
-            VK13.vkCmdDraw(commandBuffer[currentFrame]!!, 3, 1, 0, 0)
+            val vertexBufferptr = stack.longs(vertexBuffer.vertexBuffer)
+            val offsets = stack.longs(0)
+            VK13.vkCmdBindVertexBuffers(commandBuffer[currentFrame]!!, 0, vertexBufferptr, offsets)
+
+            VK13.vkCmdDraw(commandBuffer[currentFrame]!!, vertexBuffer.length, 1, 0, 0)
             VK13.vkCmdEndRenderPass(commandBuffer[currentFrame]!!)
             if (VK13.vkEndCommandBuffer(commandBuffer[currentFrame]!!) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")

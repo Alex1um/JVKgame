@@ -1,6 +1,7 @@
 package VkRender
 
 import org.lwjgl.PointerBuffer
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.Closeable
 import java.io.File
@@ -26,11 +27,20 @@ class Util : Closeable {
         lateinit var pp: PointerBuffer
         lateinit var ptrBuf: PointerBuffer
 
-
         fun readFile(filename: String): ByteArray {
             with(File(filename)) {
                 return this.readBytes()
             }
+        }
+
+        fun findMemoryType(stack: MemoryStack, physicalDevice: PhysicalDevice, typeFilter: Int, properties: Int): Int {
+            for ((i: Int, t) in physicalDevice.memoryProperties.memoryTypes().withIndex()) {
+                if ((typeFilter and (1 shl i)) != 0 && (t.propertyFlags() and properties) == properties) {
+                    return i
+                }
+            }
+
+            throw IllegalStateException("Failed to find suitable memory type")
         }
     }
 

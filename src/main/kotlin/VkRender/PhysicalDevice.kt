@@ -17,6 +17,7 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
     val properties: VkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc()
     val features: VkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc()
     val queueProperties: VkQueueFamilyProperties.Buffer
+    val memoryProperties: VkPhysicalDeviceMemoryProperties
 
     val extent: VkExtent2D
     val presentMode: Int
@@ -113,12 +114,16 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                     presentMode = details.chooseSwapPresentMode()
                     surfaceFormat = details.chooseSwapSurfaceFormat()
 
+                    memoryProperties = VkPhysicalDeviceMemoryProperties.calloc()
+                    VK13.vkGetPhysicalDeviceMemoryProperties(physicalDevice, memoryProperties)
+
                 }
             }
         }
     }
 
     override fun close() {
+        memoryProperties.free()
         properties.free()
         features.free()
         queueProperties.free()

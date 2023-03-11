@@ -7,6 +7,7 @@ group = "org.example"
 version = "1.0-SNAPSHOT"
 val lwjglVersion = "3.3.1"
 val `lwjgl3-awtVersion` = "0.1.8"
+val jomlVersion = "1.10.5"
 val lwjglNatives = "natives-linux"
 
 repositories {
@@ -31,6 +32,7 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-openal", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation("org.lwjglx", "lwjgl3-awt", `lwjgl3-awtVersion`)
+    implementation("org.joml", "joml", jomlVersion)
 
 }
 

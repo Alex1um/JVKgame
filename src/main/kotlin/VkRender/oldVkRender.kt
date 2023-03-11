@@ -1,3 +1,5 @@
+package VkRender
+
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -14,7 +16,7 @@ import java.nio.LongBuffer
 import java.nio.charset.StandardCharsets
 import kotlin.properties.Delegates
 
-class VkRender {
+class oldVkRender {
 
     var window: Long? = null
     var height = 600

@@ -43,11 +43,13 @@ class GraphicsPipeline(
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                     .pDynamicStates(dynamicStates)
 
+                val bindingDescription = Vertex.getBindingDescription(stack)
+                val attributeDescription = Vertex.getAttributeDescriptions(stack)
 
                 val vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc()
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-                    .pVertexBindingDescriptions(null)
-                    .pVertexAttributeDescriptions(null)
+                    .pVertexBindingDescriptions(bindingDescription)
+                    .pVertexAttributeDescriptions(attributeDescription)
 
                 val inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack)
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
