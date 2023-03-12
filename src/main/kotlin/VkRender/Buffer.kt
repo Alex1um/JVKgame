@@ -1,14 +1,12 @@
 package VkRender
 
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
-import org.lwjgl.vulkan.VkBufferCreateInfo
-import org.lwjgl.vulkan.VkMemoryAllocateInfo
-import org.lwjgl.vulkan.VkMemoryRequirements
 import java.io.Closeable
 import java.nio.ByteBuffer
 
-class VertexBuffer(
+class Buffer(
     private val ldevide: Device,
     physicalDevice: PhysicalDevice,
     val size: Long,
@@ -79,6 +77,24 @@ class VertexBuffer(
         vkUnmapMemory(ldevide.device, vertexBufferMemory)
     }
 
+    fun fill(indexes: Array<Int>) {
+
+        fun memcpy(buffer: ByteBuffer, array: Array<Int>) {
+
+            fun ByteBuffer.put(v: Int) {
+               this.putInt(v)
+            }
+
+            for (e in array) {
+                buffer.put(e)
+            }
+        }
+
+        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size, 0, Util.pp)
+        memcpy(Util.pp.getByteBuffer(0, size.toInt()), indexes)
+        vkUnmapMemory(ldevide.device, vertexBufferMemory)
+    }
+
     constructor(
         ldevide: Device,
         physicalDevice: PhysicalDevice,
@@ -91,6 +107,40 @@ class VertexBuffer(
             this.fill(vertixes)
         }
 
+    fun copyBuffer(ldevide: Device, commands: CommandPool, graphicsQueue: VkQueue, dest: Buffer) {
+        MemoryStack.stackPush().use { stack ->
+            val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                .commandPool(commands.pool)
+                .commandBufferCount(1)
+
+            val pCommandBuffer = stack.pointers(0)
+            vkAllocateCommandBuffers(ldevide.device, allocInfo, pCommandBuffer)
+            val commandBuffer = VkCommandBuffer(pCommandBuffer[0], ldevide.device)
+
+            val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                .flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+
+            vkBeginCommandBuffer(commandBuffer, beginInfo)
+
+            val copyRegion = VkBufferCopy.calloc(1, stack)
+                .srcOffset(0)
+                .dstOffset(0)
+                .size(this.size)
+            vkCmdCopyBuffer(commandBuffer, this.vertexBuffer, dest.vertexBuffer, copyRegion)
+            vkEndCommandBuffer(commandBuffer)
+
+            val submitInfo = VkSubmitInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                .pCommandBuffers(pCommandBuffer)
+
+            vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE)
+            vkQueueWaitIdle(graphicsQueue)
+            vkFreeCommandBuffers(ldevide.device, commands.pool, pCommandBuffer)
+        }
+    }
     override fun close() {
         vkDestroyBuffer(ldevide.device, vertexBuffer, null)
         vkFreeMemory(ldevide.device, vertexBufferMemory, null)

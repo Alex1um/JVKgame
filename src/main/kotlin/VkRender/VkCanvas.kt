@@ -3,16 +3,12 @@ package VkRender
 import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
-import VkRender.Sync.Semaphore
 import VkRender.Sync.Semaphores
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
-import org.lwjgl.vulkan.KHRSwapchain
-import org.lwjgl.vulkan.VK13
-import org.lwjgl.vulkan.VkPresentInfoKHR
-import org.lwjgl.vulkan.VkSubmitInfo
+import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.awt.AWTVKCanvas
 import org.lwjgl.vulkan.awt.VKData
 import java.awt.event.ComponentEvent
@@ -39,18 +35,23 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         private set
     lateinit var imageAvailableSemaphore: Semaphores
     lateinit var renderFinishedSemaphore: Semaphores
-    lateinit var vertexBuffer: VertexBuffer
+    lateinit var vertexBuffer: VertexStagingBuffer
+    lateinit var indexBuffer: IndexBuffer
 
     private var currentFrame = 0
     private var framebufferResized = false
 
     private val vertices = arrayOf(
-        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 0f, 0f)),
-        Vertex(Vector2f(0f, -0.5f), Vector3f(1f, 1f, 0f)),
-        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
-        Vertex(Vector2f(-0f, 0.8f), Vector3f(1f, 0f, 0f)),
-        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
-        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
+        Vertex(Vector2f(-0.5f, -0.5f), Vector3f(1f, 0f, 0f)),
+        Vertex(Vector2f(0.5f, -0.5f), Vector3f(0f, 1f, 0f)),
+        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 0f, 1f)),
+        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 1f, 1f)),
+//        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
+//        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
+    )
+
+    private val indexes = arrayOf(
+        0, 1, 2, 2, 3, 0
     )
 
     override fun initVK() {
@@ -61,11 +62,12 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         device = Device(physicalDevice)
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
-        pipeline = GraphicsPipeline(device, renderPass, size.width, size.height)
+        pipeline = GraphicsPipeline(device, renderPass)
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
-        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands, device.graphicsQueue).vertexBuffer
+        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands, device.graphicsQueue)
+        indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands, device.graphicsQueue)
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(2, device, stack)
@@ -78,9 +80,6 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
     override fun paintVK() {
 
-        println(1)
-
-        var imageIndex = 0
         MemoryStack.stackPush().use { stack ->
             VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
 
@@ -106,11 +105,11 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkResetFences(device.device, inFlightFences[currentFrame])
 
-            imageIndex = Util.ip[0]
+            val imageIndex = Util.ip[0]
 
             VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-            commands.record(currentFrame, imageIndex, renderPass, pipeline, swapChain, size.width, size.height, vertexBuffer, vertices.size)
+            record(currentFrame, imageIndex)
 
             val lp2 = stack.mallocLong(1)
             val submitInfo = VkSubmitInfo.calloc(stack)
@@ -143,6 +142,84 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
                 throw IllegalStateException("failed to present swap chain image!")
             }
             currentFrame = (currentFrame + 1) % Config.MAX_FRAMES_IN_FLIGHT
+        }
+    }
+
+    fun record(currentFrame: Int, imageIndex: Int) {
+        val currentCommandBuffer = commands.commandBuffer[currentFrame]!!
+        MemoryStack.stackPush().use { stack ->
+            val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
+                .sType(VK13.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+//                .flags(0)
+//                .pInheritanceInfo(null)
+
+            if (VK13.vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK13.VK_SUCCESS) {
+                throw IllegalStateException("failed to begin recording command buffer!")
+            }
+
+            val clearColor = VkClearValue.calloc(1, stack)
+            clearColor.color()
+                .float32(0, 0.0f)
+                .float32(1, 0.0f)
+                .float32(2, 0.0f)
+                .float32(3, 1.0f)
+
+            val renderPassInfo = VkRenderPassBeginInfo.calloc(stack)
+                .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                .renderPass(renderPass.renderPass)
+                .framebuffer(swapChain.swapChainFramebuffers[imageIndex])
+                .renderArea {
+                    it.offset {
+                        it.x(0)
+                            .y(0)
+                    }
+                    it.extent {
+                        it.width(width)
+                            .height(height)
+                    }
+                }
+                .clearValueCount(1)
+                .pClearValues(clearColor)
+//                .pNext(MemoryUtil.NULL)
+
+            VK13.vkCmdBeginRenderPass(currentCommandBuffer, renderPassInfo, VK13.VK_SUBPASS_CONTENTS_INLINE)
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
+
+            val viewport = VkViewport.calloc(1, stack)
+                .x(0.0f)
+                .y(0.0f)
+                .width(width.toFloat())
+                .height(height.toFloat())
+                .minDepth(0.0f)
+                .maxDepth(1.0f)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
+
+            val scissor = VkRect2D.calloc(1, stack)
+                .offset {
+                    it.x(0)
+                        .y(0)
+                }
+                .extent {
+                    it.width(width)
+                        .height(height)
+                }
+
+            VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissor)
+
+            val vertexBufferptr = stack.longs(vertexBuffer.buffer.vertexBuffer)
+            val offsets = stack.longs(0)
+            VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, vertexBufferptr, offsets)
+
+            VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
+
+//            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, indexes.size, 1, 0, 0, 0)
+
+            VK13.vkCmdEndRenderPass(currentCommandBuffer)
+            if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
+                throw IllegalStateException("failed to record command buffer")
+            }
         }
     }
 
