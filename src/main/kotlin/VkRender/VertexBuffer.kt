@@ -8,19 +8,23 @@ import org.lwjgl.vulkan.VkMemoryRequirements
 import java.io.Closeable
 import java.nio.ByteBuffer
 
-class VertexBuffer(private val ldevide: Device, physicalDevice: PhysicalDevice, vertixes: Array<Vertex>, vertex_size: Int) : Closeable {
+class VertexBuffer(
+    private val ldevide: Device,
+    physicalDevice: PhysicalDevice,
+    val size: Long,
+    usage: Int,
+    properties: Int
+) : Closeable {
 
     val vertexBuffer: Long
-    val length: Int
     val vertexBufferMemory: Long
 
     init {
-        length = vertixes.size
         MemoryStack.stackPush().use { stack ->
             val bufferInfo = VkBufferCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
-                .size((vertex_size * vertixes.size).toLong())
-                .usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+                .size(size)
+                .usage(usage)
                 .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
 
             if (vkCreateBuffer(ldevide.device, bufferInfo, null, Util.lp) != VK_SUCCESS) {
@@ -39,7 +43,7 @@ class VertexBuffer(private val ldevide: Device, physicalDevice: PhysicalDevice, 
                     stack,
                     physicalDevice,
                     memoryRequirements.memoryTypeBits(),
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+                    properties))
 
             if (vkAllocateMemory(ldevide.device, memoryAllocateInfo, null, Util.lp) != VK_SUCCESS) {
                 throw IllegalStateException("Failed to allocate memory for vertex buffer")
@@ -49,27 +53,43 @@ class VertexBuffer(private val ldevide: Device, physicalDevice: PhysicalDevice, 
 
             vkBindBufferMemory(ldevide.device, vertexBuffer, vertexBufferMemory, 0)
 
-            vkMapMemory(ldevide.device, vertexBufferMemory, 0, bufferInfo.size(), 0, Util.pp)
-            memcpy(Util.pp.getByteBuffer(0, bufferInfo.size().toInt()), vertixes)
-            vkUnmapMemory(ldevide.device, vertexBufferMemory)
         }
     }
 
-    fun ByteBuffer.put(v: Vertex) {
-        this.putFloat(v.pos.x())
-        this.putFloat(v.pos.y())
+    fun fill(vertixes: Array<Vertex>) {
 
-        this.putFloat(v.color.x())
-        this.putFloat(v.color.y())
-        this.putFloat(v.color.z())
+        fun memcpy(buffer: ByteBuffer, array: Array<Vertex>) {
 
-    }
+            fun ByteBuffer.put(v: Vertex) {
+                this.putFloat(v.pos.x())
+                this.putFloat(v.pos.y())
 
-    fun memcpy(buffer: ByteBuffer, array: Array<Vertex>) {
-        for (e in array) {
-            buffer.put(e)
+                this.putFloat(v.color.x())
+                this.putFloat(v.color.y())
+                this.putFloat(v.color.z())
+            }
+
+            for (e in array) {
+                buffer.put(e)
+            }
         }
+
+        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size, 0, Util.pp)
+        memcpy(Util.pp.getByteBuffer(0, size.toInt()), vertixes)
+        vkUnmapMemory(ldevide.device, vertexBufferMemory)
     }
+
+    constructor(
+        ldevide: Device,
+        physicalDevice: PhysicalDevice,
+        vertixes: Array<Vertex>) : this(
+        ldevide,
+        physicalDevice,
+        (vertixes.size * Vertex.SIZEOF).toLong(),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+            this.fill(vertixes)
+        }
 
     override fun close() {
         vkDestroyBuffer(ldevide.device, vertexBuffer, null)

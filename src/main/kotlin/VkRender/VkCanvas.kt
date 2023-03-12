@@ -64,7 +64,8 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         pipeline = GraphicsPipeline(device, renderPass, size.width, size.height)
         commands = CommandPool(device, physicalDevice)
 
-        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
+//        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
+        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands, device.graphicsQueue).vertexBuffer
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(2, device, stack)
@@ -109,7 +110,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-            commands.record(currentFrame, imageIndex, renderPass, pipeline, swapChain, size.width, size.height, vertexBuffer)
+            commands.record(currentFrame, imageIndex, renderPass, pipeline, swapChain, size.width, size.height, vertexBuffer, vertices.size)
 
             val lp2 = stack.mallocLong(1)
             val submitInfo = VkSubmitInfo.calloc(stack)
