@@ -9,6 +9,7 @@ import java.io.Closeable
 class GraphicsPipeline(
     private val ldevice: Device,
     renderPass: RenderPass,
+    descriptorSetLayout: DescriptorSetLayout
 ) : Closeable {
 
     val graphicsPipeLine: Long
@@ -96,11 +97,11 @@ class GraphicsPipeline(
                 val multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
                     .sampleShadingEnable(false)
-//                    .rasterizationSamples(VK_SAMPLE_COUNT_1_BIT)
-//                    .minSampleShading(1.0f)
-//                    .pSampleMask(null)
-//                    .alphaToCoverageEnable(false)
-//                    .alphaToOneEnable(false)
+                    .rasterizationSamples(VK_SAMPLE_COUNT_1_BIT)
+                    .minSampleShading(1.0f)
+                    .pSampleMask(null)
+                    .alphaToCoverageEnable(false)
+                    .alphaToOneEnable(false)
 
                 val colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack)
                     .colorWriteMask(VK_COLOR_COMPONENT_A_BIT or VK_COLOR_COMPONENT_B_BIT or VK_COLOR_COMPONENT_G_BIT or VK_COLOR_COMPONENT_R_BIT)
@@ -130,9 +131,11 @@ class GraphicsPipeline(
                     .blendConstants(2, 0.7f)
                     .blendConstants(3, 1.0f)
 
+                val layouts = stack.longs(descriptorSetLayout.descriptorSetLayout)
+
                 val pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-                    .pSetLayouts(null)
+                    .pSetLayouts(layouts)
                     .pPushConstantRanges(null)
 
                 if (vkCreatePipelineLayout(ldevice.device, pipelineLayoutInfo, null, lp) != VK_SUCCESS) {
@@ -207,7 +210,6 @@ class GraphicsPipeline(
     override fun close() {
         vkDestroyPipeline(ldevice.device, graphicsPipeLine, null)
         vkDestroyPipelineLayout(ldevice.device, layout, null)
-
     }
 
 }

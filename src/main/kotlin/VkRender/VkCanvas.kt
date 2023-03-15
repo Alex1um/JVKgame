@@ -27,6 +27,8 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         private set
     lateinit var swapChain: SwapChain
         private set
+    lateinit var descriptorSetLayout: DescriptorSetLayout
+        private set
     lateinit var pipeline: GraphicsPipeline
         private set
     lateinit var commands: CommandPool
@@ -37,6 +39,8 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     lateinit var renderFinishedSemaphore: Semaphores
     lateinit var vertexBuffer: VertexStagingBuffer
     lateinit var indexBuffer: IndexBuffer
+    lateinit var squareSizeBuffer: SquareSizeBuffer
+    lateinit var uniformDescriptors: UniformDescriptors
 
     private var currentFrame = 0
     private var framebufferResized = false
@@ -62,12 +66,15 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         device = Device(physicalDevice)
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
-        pipeline = GraphicsPipeline(device, renderPass)
+        descriptorSetLayout = DescriptorSetLayout(device)
+        pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout)
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
         vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands, device.graphicsQueue)
         indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands, device.graphicsQueue)
+        squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())
+        uniformDescriptors = UniformDescriptors(device, descriptorSetLayout, squareSizeBuffer)
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(2, device, stack)
@@ -109,6 +116,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
+            squareSizeBuffer.update(currentFrame, 1 / this.width.toFloat(), 1 / this.height.toFloat())
             record(currentFrame, imageIndex)
 
             val lp2 = stack.mallocLong(1)
@@ -213,7 +221,11 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
+            val currentDescriptorSet = stack.longs(uniformDescriptors.descriptorSets[currentFrame])
+//            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
 //            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
+
             VK13.vkCmdDrawIndexed(currentCommandBuffer, indexes.size, 1, 0, 0, 0)
 
             VK13.vkCmdEndRenderPass(currentCommandBuffer)
@@ -242,6 +254,9 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         imageAvailableSemaphore.close()
         commands.close()
         pipeline.close()
+        vertexBuffer.close()
+        indexBuffer.close()
+        squareSizeBuffer.close()
         renderPass.close()
         swapChain.close()
         device.close()
