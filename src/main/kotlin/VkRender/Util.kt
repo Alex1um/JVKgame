@@ -3,6 +3,7 @@ package VkRender
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.vulkan.*
 import java.io.Closeable
 import java.io.File
 import java.nio.IntBuffer
@@ -42,12 +43,14 @@ class Util : Closeable {
 
             throw IllegalStateException("Failed to find suitable memory type")
         }
-    }
 
+    }
     override fun close() {
         MemoryUtil.memFree(pp)
         MemoryUtil.memFree(lp)
         MemoryUtil.memFree(ip)
         MemoryUtil.memFree(ptrBuf)
     }
+
+
 }

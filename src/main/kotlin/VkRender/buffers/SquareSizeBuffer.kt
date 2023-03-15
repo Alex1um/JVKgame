@@ -1,12 +1,12 @@
-package VkRender
+package VkRender.buffers
 
+import VkRender.Device
+import VkRender.PhysicalDevice
+import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
-import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding
-import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo
 import java.io.Closeable
-import java.nio.LongBuffer
 
 class SquareSizeBuffer(val ldevice: Device, physicalDevice: PhysicalDevice, MAX_FRAMES_IN_FLIGHT: Int, val size: Long) : Closeable {
 

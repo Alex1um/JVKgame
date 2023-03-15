@@ -1,10 +1,14 @@
-package VkRender
+package VkRender.buffers
 
+import VkRender.CommandPool
+import VkRender.Device
+import VkRender.PhysicalDevice
+import VkRender.Vertex
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 
-class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: Array<Vertex>, commands: CommandPool, graphicsQueue: VkQueue) : Closeable {
+class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: Array<Vertex>, commands: CommandPool) : Closeable {
 
     val buffer: Buffer
 
@@ -26,7 +30,7 @@ class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, verti
             VK_BUFFER_USAGE_TRANSFER_DST_BIT or VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 
-        stagingBuffer.copyBuffer(ldevice, commands, graphicsQueue, buffer)
+        stagingBuffer.copyBuffer(ldevice, commands, buffer)
 
         stagingBuffer.close()
     }

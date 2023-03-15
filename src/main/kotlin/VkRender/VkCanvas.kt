@@ -4,6 +4,9 @@ import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
+import VkRender.buffers.IndexBuffer
+import VkRender.buffers.SquareSizeBuffer
+import VkRender.buffers.VertexStagingBuffer
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.system.MemoryStack
@@ -14,6 +17,7 @@ import org.lwjgl.vulkan.awt.VKData
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.io.Closeable
+import kotlin.system.measureNanoTime
 
 class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
     Closeable {
@@ -71,86 +75,94 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
-        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands, device.graphicsQueue)
-        indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands, device.graphicsQueue)
+        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands)
+        indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands)
         squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())
         uniformDescriptors = UniformDescriptors(device, descriptorSetLayout, squareSizeBuffer)
 
         MemoryStack.stackPush().use { stack ->
-            inFlightFences = Fences(2, device, stack)
+            inFlightFences = Fences(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
 
-            imageAvailableSemaphore = Semaphores(2, device, stack)
+            imageAvailableSemaphore = Semaphores(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
 
-            renderFinishedSemaphore = Semaphores(2, device, stack)
+            renderFinishedSemaphore = Semaphores(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
         }
     }
 
     override fun paintVK() {
 
-        MemoryStack.stackPush().use { stack ->
-            VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
+        val time = measureNanoTime {
+            MemoryStack.stackPush().use { stack ->
+                VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
 
 //            vkResetFences(device, inFlightFence)
 
-            var result = KHRSwapchain.vkAcquireNextImageKHR(
-                device.device,
-                swapChain.swapChain,
-                Long.MAX_VALUE,
-                imageAvailableSemaphore[currentFrame],
-                VK13.VK_NULL_HANDLE,
-                Util.ip
-            )
+                var result = KHRSwapchain.vkAcquireNextImageKHR(
+                    device.device,
+                    swapChain.swapChain,
+                    Long.MAX_VALUE,
+                    imageAvailableSemaphore[currentFrame],
+                    VK13.VK_NULL_HANDLE,
+                    Util.ip
+                )
 
-            if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || framebufferResized) {
-                swapChain.reCreate(size.width, size.height)
-                framebufferResized = false
-                paintVK()
-                return
-            } else if (result != VK13.VK_SUCCESS && result != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
-                throw IllegalStateException("failed to aquire swap chain image!")
+                if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || framebufferResized) {
+                    swapChain.reCreate(size.width, size.height)
+                    framebufferResized = false
+                    paintVK()
+                    return
+                } else if (result != VK13.VK_SUCCESS && result != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                    throw IllegalStateException("failed to aquire swap chain image!")
+                }
+
+                VK13.vkResetFences(device.device, inFlightFences[currentFrame])
+
+                val imageIndex = Util.ip[0]
+
+                VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
+
+                squareSizeBuffer.update(currentFrame, 1 / this.width.toFloat(), 1 / this.height.toFloat())
+                record(currentFrame, imageIndex)
+
+                val lp2 = stack.mallocLong(1)
+                val submitInfo = VkSubmitInfo.calloc(stack)
+                    .sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                    .pNext(MemoryUtil.NULL)
+                    .waitSemaphoreCount(1)
+                    .pWaitSemaphores(Util.lp.put(0, imageAvailableSemaphore[currentFrame]))
+                    .pWaitDstStageMask(Util.ip.put(0, VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
+                    .pCommandBuffers(Util.pp.put(0, commands.commandBuffer[currentFrame]!!))
+                    .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore[currentFrame]))
+
+                if (VK13.vkQueueSubmit(
+                        device.graphicsQueue,
+                        submitInfo,
+                        inFlightFences[currentFrame]
+                    ) != VK13.VK_SUCCESS
+                ) {
+                    throw IllegalStateException("failed to submit draw command buffer")
+                }
+
+                val presentInfo = VkPresentInfoKHR.calloc(stack)
+                    .sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+                    .pWaitSemaphores(lp2)
+                    .swapchainCount(1)
+                    .pSwapchains(Util.lp.put(0, swapChain.swapChain))
+                    .pImageIndices(Util.ip.put(0, imageIndex))
+                    .pResults(null)
+
+                result = KHRSwapchain.vkQueuePresentKHR(device.graphicsQueue, presentInfo)
+
+                if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || result == KHRSwapchain.VK_SUBOPTIMAL_KHR || framebufferResized) {
+                    framebufferResized = false
+                    swapChain.reCreate(size.width, size.height)
+                } else if (result != VK13.VK_SUCCESS) {
+                    throw IllegalStateException("failed to present swap chain image!")
+                }
+                currentFrame = (currentFrame + 1) % Config.MAX_FRAMES_IN_FLIGHT
             }
-
-            VK13.vkResetFences(device.device, inFlightFences[currentFrame])
-
-            val imageIndex = Util.ip[0]
-
-            VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
-
-            squareSizeBuffer.update(currentFrame, 1 / this.width.toFloat(), 1 / this.height.toFloat())
-            record(currentFrame, imageIndex)
-
-            val lp2 = stack.mallocLong(1)
-            val submitInfo = VkSubmitInfo.calloc(stack)
-                .sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                .pNext(MemoryUtil.NULL)
-                .waitSemaphoreCount(1)
-                .pWaitSemaphores(Util.lp.put(0, imageAvailableSemaphore[currentFrame]))
-                .pWaitDstStageMask(Util.ip.put(0, VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
-                .pCommandBuffers(Util.pp.put(0, commands.commandBuffer[currentFrame]!!))
-                .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore[currentFrame]))
-
-            if (VK13.vkQueueSubmit(device.graphicsQueue, submitInfo, inFlightFences[currentFrame]) != VK13.VK_SUCCESS) {
-                throw IllegalStateException("failed to submit draw command buffer")
-            }
-
-            val presentInfo = VkPresentInfoKHR.calloc(stack)
-                .sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
-                .pWaitSemaphores(lp2)
-                .swapchainCount(1)
-                .pSwapchains(Util.lp.put(0, swapChain.swapChain))
-                .pImageIndices(Util.ip.put(0, imageIndex))
-                .pResults(null)
-
-            result = KHRSwapchain.vkQueuePresentKHR(device.graphicsQueue, presentInfo)
-
-            if (result == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || result == KHRSwapchain.VK_SUBOPTIMAL_KHR || framebufferResized) {
-                framebufferResized = false
-                swapChain.reCreate(size.width, size.height)
-            } else if (result != VK13.VK_SUCCESS) {
-                throw IllegalStateException("failed to present swap chain image!")
-            }
-            currentFrame = (currentFrame + 1) % Config.MAX_FRAMES_IN_FLIGHT
         }
+//        println("fps: ${1e9 / time}")
     }
 
     fun record(currentFrame: Int, imageIndex: Int) {

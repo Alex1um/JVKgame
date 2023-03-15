@@ -1,5 +1,6 @@
-package VkRender
+package VkRender.buffers
 
+import VkRender.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
@@ -37,11 +38,14 @@ class Buffer(
             val memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                 .allocationSize(memoryRequirements.size())
-                .memoryTypeIndex(Util.findMemoryType(
-                    stack,
-                    physicalDevice,
-                    memoryRequirements.memoryTypeBits(),
-                    properties))
+                .memoryTypeIndex(
+                    Util.findMemoryType(
+                        stack,
+                        physicalDevice,
+                        memoryRequirements.memoryTypeBits(),
+                        properties
+                    )
+                )
 
             if (vkAllocateMemory(ldevide.device, memoryAllocateInfo, null, Util.lp) != VK_SUCCESS) {
                 throw IllegalStateException("Failed to allocate memory for vertex buffer")
@@ -95,6 +99,17 @@ class Buffer(
         vkUnmapMemory(ldevide.device, vertexBufferMemory)
     }
 
+
+    fun fill(src: ByteBuffer, size: Int) {
+
+        val dest = Util.pp
+        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size.toLong(), 0, dest)
+        src.limit(size)
+        dest.put(src)
+        src.limit(src.capacity()).rewind()
+        vkUnmapMemory(ldevide.device, vertexBufferMemory)
+    }
+
     constructor(
         ldevide: Device,
         physicalDevice: PhysicalDevice,
@@ -107,38 +122,48 @@ class Buffer(
             this.fill(vertixes)
         }
 
-    fun copyBuffer(ldevide: Device, commands: CommandPool, graphicsQueue: VkQueue, dest: Buffer) {
+    fun copyBuffer(ldevide: Device, commands: CommandPool, dest: Buffer) {
         MemoryStack.stackPush().use { stack ->
-            val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
-                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                .commandPool(commands.pool)
-                .commandBufferCount(1)
+            SingleTimeCommands(stack, ldevide, commands).use {
 
-            val pCommandBuffer = stack.pointers(0)
-            vkAllocateCommandBuffers(ldevide.device, allocInfo, pCommandBuffer)
-            val commandBuffer = VkCommandBuffer(pCommandBuffer[0], ldevide.device)
+                val copyRegion = VkBufferCopy.calloc(1, stack)
+                    .srcOffset(0)
+                    .dstOffset(0)
+                    .size(this.size)
+                vkCmdCopyBuffer(it.commandBuffer, this.vertexBuffer, dest.vertexBuffer, copyRegion)
 
-            val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
-                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                .flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+            }
+        }
+    }
 
-            vkBeginCommandBuffer(commandBuffer, beginInfo)
+    fun copyToImage(stack: MemoryStack, ldevice: Device, commands: CommandPool, width: Int, height: Int, image: Image) {
+        SingleTimeCommands(stack, ldevice, commands).use {
+            val region = VkBufferImageCopy.calloc(1, stack)
+                .bufferOffset(0)
+                .bufferRowLength(0)
+                .bufferImageHeight(0)
+                .imageSubresource {
+                    with(it) {
+                        aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+                        mipLevel(0)
+                        baseArrayLayer(0)
+                        layerCount(1)
+                    }
+                }
+                .imageOffset {
+                    with(it) {
+                        x(0)
+                        y(0)
+                        z(0)
+                    }
+                }
+                .imageExtent {
+                    it.width(width)
+                    it.height(height)
+                    it.depth(1)
+                }
 
-            val copyRegion = VkBufferCopy.calloc(1, stack)
-                .srcOffset(0)
-                .dstOffset(0)
-                .size(this.size)
-            vkCmdCopyBuffer(commandBuffer, this.vertexBuffer, dest.vertexBuffer, copyRegion)
-            vkEndCommandBuffer(commandBuffer)
-
-            val submitInfo = VkSubmitInfo.calloc(stack)
-                .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                .pCommandBuffers(pCommandBuffer)
-
-            vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE)
-            vkQueueWaitIdle(graphicsQueue)
-            vkFreeCommandBuffers(ldevide.device, commands.pool, pCommandBuffer)
+            vkCmdCopyBufferToImage(it.commandBuffer, vertexBuffer, image.imageh, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region)
         }
     }
     override fun close() {

@@ -1,5 +1,8 @@
-package VkRender
+package VkRender.buffers
 
+import VkRender.CommandPool
+import VkRender.Device
+import VkRender.PhysicalDevice
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.VkQueue
@@ -10,7 +13,6 @@ class IndexBuffer(
     physicalDevice: PhysicalDevice,
     indexes: Array<Int>,
     commandPool: CommandPool,
-    graphicsQueue: VkQueue
 ) : Closeable {
 
     val length = indexes.size
@@ -26,7 +28,7 @@ class IndexBuffer(
 
             buffer = Buffer(ldevice, physicalDevice, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT or VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 
-            stagingBuffer.copyBuffer(ldevice, commandPool, graphicsQueue, buffer)
+            stagingBuffer.copyBuffer(ldevice, commandPool, buffer)
 
             stagingBuffer.close()
         }
