@@ -44,6 +44,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     lateinit var vertexBuffer: VertexStagingBuffer
     lateinit var indexBuffer: IndexBuffer
     lateinit var squareSizeBuffer: SquareSizeBuffer
+    lateinit var image: TextureImage
     lateinit var uniformDescriptors: UniformDescriptors
 
     private var currentFrame = 0
@@ -75,6 +76,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
+        image = TextureImage(device, physicalDevice, commands)
         vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands)
         indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands)
         squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())

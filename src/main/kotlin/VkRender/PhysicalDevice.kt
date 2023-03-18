@@ -56,7 +56,13 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                     swapChainAdequate = details.formats.capacity() != 0 && details.presentModes.capacity() != 0
                 }
 
-                return indices.isComplete() && extensionsSupported && swapChainAdequate
+                val features = VkPhysicalDeviceFeatures.calloc(stack)
+                VK13.vkGetPhysicalDeviceFeatures(device, features)
+
+                return indices.isComplete() &&
+                        extensionsSupported &&
+                        swapChainAdequate &&
+                        (features.samplerAnisotropy() || !Config.ENABLE_ANISOTROPY)
             }
         }
     }

@@ -1,6 +1,7 @@
 package VkRender.buffers
 
 import VkRender.*
+import VkRender.Textures.Image
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
@@ -102,8 +103,8 @@ class Buffer(
 
     fun fill(src: ByteBuffer, size: Int) {
 
-        val dest = Util.pp
-        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size.toLong(), 0, dest)
+        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size.toLong(), 0, Util.pp)
+        val dest = Util.pp.getByteBuffer(0, size)
         src.limit(size)
         dest.put(src)
         src.limit(src.capacity()).rewind()

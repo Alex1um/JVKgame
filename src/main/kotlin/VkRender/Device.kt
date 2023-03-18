@@ -40,6 +40,9 @@ class Device(physicalDevice: PhysicalDevice): Closeable {
                 }
 
                 val features = VkPhysicalDeviceFeatures.calloc(stack)
+                if (Config.ENABLE_ANISOTROPY) {
+                    features.samplerAnisotropy(true)
+                }
 
                 ptrBuf.clear()
                 val VK_KHR_SWAPCHAIN_EXTENSION = stack.UTF8(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME)

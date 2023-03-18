@@ -1,5 +1,6 @@
-package VkRender
+package VkRender.Textures
 
+import VkRender.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
@@ -51,9 +52,12 @@ class Image(stack: MemoryStack,
         val allocInfo = VkMemoryAllocateInfo.calloc(stack)
             .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
             .allocationSize(requirements.size())
-            .memoryTypeIndex(Util.findMemoryType(stack, physicalDevice, requirements.memoryTypeBits(),
-                properties
-            ))
+            .memoryTypeIndex(
+                Util.findMemoryType(
+                    stack, physicalDevice, requirements.memoryTypeBits(),
+                    properties
+                )
+            )
 
         if (vkAllocateMemory(ldevice.device, allocInfo, null, Util.lp) != VK_SUCCESS) {
             throw IllegalStateException("Failed to allocate Memory")

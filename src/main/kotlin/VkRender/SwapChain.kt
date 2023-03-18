@@ -1,6 +1,7 @@
 package VkRender
 
 import VkRender.Surfaces.Surface
+import VkRender.Textures.ImageView
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
@@ -22,7 +23,7 @@ class SwapChain(
     private var imageCount: Int = 0
     private lateinit var swapChainImages: LongBuffer
     private var swapChainImageFormat: Int = 0
-    lateinit var swapChainImageViews: LongArray
+    lateinit var swapChainImageViews: Array<ImageView>
     private lateinit var swapChainExtent: VkExtent2D
     lateinit var swapChainFramebuffers: LongArray
         private set;
@@ -97,45 +98,17 @@ class SwapChain(
                     swapChainImageFormat = surfaceFormat.format()
                     swapChainExtent = extent
                 }
-                createImageViews(stack)
+//                createImageViews(stack)
+                swapChainImageViews = Array(swapChainImages.capacity()) { ImageView(ldevice, stack, swapChainImages[it], swapChainImageFormat) }
                 createFrameBuffers(stack, renderPass.renderPass, width, height)
             }
-        }
-    }
-
-    private fun createImageViews(stack: MemoryStack) {
-        swapChainImageViews = LongArray(swapChainImages.capacity())
-        for (i in 0 until swapChainImages.capacity()) {
-            val createInfo = VkImageViewCreateInfo.calloc(stack)
-                .sType(VK13.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                .image(swapChainImages[i])
-                .viewType(VK13.VK_IMAGE_VIEW_TYPE_2D)
-                .format(swapChainImageFormat)
-                .components {
-                    it.a(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    it.r(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    it.g(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    it.b(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                }
-                .subresourceRange {
-                    it.aspectMask(VK13.VK_IMAGE_ASPECT_COLOR_BIT)
-                    it.baseMipLevel(0)
-                    it.levelCount(1)
-                    it.baseArrayLayer(0)
-                    it.levelCount(1)
-                    it.layerCount(1)
-                }
-            if (VK13.vkCreateImageView(ldevice.device, createInfo, null, Util.lp) != VK13.VK_SUCCESS) {
-                throw IllegalStateException("failed to create image views!")
-            }
-            swapChainImageViews[i] = Util.lp[0]
         }
     }
 
     private fun createFrameBuffers(stack: MemoryStack, renderPass: Long, width: Int, height: Int) {
         swapChainFramebuffers = LongArray(swapChainImageViews.size)
         for (i in swapChainImageViews.indices) {
-            val attachments = stack.longs(swapChainImageViews[i])
+            val attachments = stack.longs(swapChainImageViews[i].view)
 
             val framebufferInfo = VkFramebufferCreateInfo.calloc(stack)
                 .sType(VK13.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
@@ -168,7 +141,7 @@ class SwapChain(
             VK13.vkDestroyFramebuffer(ldevice.device, framebuffer, null)
         }
         for (e in swapChainImageViews) {
-            VK13.vkDestroyImageView(ldevice.device, e, null)
+            e.close()
         }
         MemoryUtil.memFree(swapChainImages)
         KHRSwapchain.vkDestroySwapchainKHR(ldevice.device, swapChain, null)
