@@ -1,7 +1,8 @@
-package VkRender
+package VkRender.Textures
 
-import VkRender.Textures.Image
-import VkRender.Textures.ImageView
+import VkRender.CommandPool
+import VkRender.Device
+import VkRender.PhysicalDevice
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.system.MemoryStack
 import java.nio.ByteBuffer

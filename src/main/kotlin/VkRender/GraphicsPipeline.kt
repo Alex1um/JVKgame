@@ -1,5 +1,6 @@
 package VkRender
 
+import VkRender.Descriptors.DescriptorSetLayout
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*

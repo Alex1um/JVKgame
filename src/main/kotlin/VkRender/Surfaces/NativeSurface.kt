@@ -2,7 +2,6 @@ package VkRender.Surfaces
 
 import VkRender.Instance
 import VkRender.Util
-import VkRender.Window
 import org.lwjgl.glfw.GLFWVulkan
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.KHRSurface

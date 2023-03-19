@@ -1,5 +1,7 @@
-package VkRender
+package VkRender.Descriptors
 
+import VkRender.Device
+import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding
@@ -14,12 +16,19 @@ class DescriptorSetLayout(val ldevice: Device) : Closeable {
 
         MemoryStack.stackPush().use { stack ->
 
-            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(1, stack)
+            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(2, stack)
+            ssLayoutBinding[0]
                 .binding(0)
                 .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                 .descriptorCount(1)
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
                 .pImmutableSamplers(null)
+            ssLayoutBinding[1]
+                .binding(1)
+                .descriptorCount(1)
+                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                .pImmutableSamplers(null)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
 
             val ssDescriptorSetLayoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)

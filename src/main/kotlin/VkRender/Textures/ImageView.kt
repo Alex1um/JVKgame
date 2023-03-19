@@ -1,7 +1,6 @@
 package VkRender.Textures
 
 import VkRender.Device
-import VkRender.TextureImage
 import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VkImageViewCreateInfo

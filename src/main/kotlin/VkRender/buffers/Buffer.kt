@@ -63,17 +63,8 @@ class Buffer(
 
         fun memcpy(buffer: ByteBuffer, array: Array<Vertex>) {
 
-            fun ByteBuffer.put(v: Vertex) {
-                this.putFloat(v.pos.x())
-                this.putFloat(v.pos.y())
-
-                this.putFloat(v.color.x())
-                this.putFloat(v.color.y())
-                this.putFloat(v.color.z())
-            }
-
-            for (e in array) {
-                buffer.put(e)
+            for (v in array) {
+                v.put(buffer)
             }
         }
 

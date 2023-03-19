@@ -1,9 +1,14 @@
 package VkRender
 
+import VkRender.Descriptors.DescriptorPool
+import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
+import VkRender.Textures.ImageView
+import VkRender.Textures.Sampler
+import VkRender.Textures.TextureImage
 import VkRender.buffers.IndexBuffer
 import VkRender.buffers.SquareSizeBuffer
 import VkRender.buffers.VertexStagingBuffer
@@ -45,16 +50,19 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     lateinit var indexBuffer: IndexBuffer
     lateinit var squareSizeBuffer: SquareSizeBuffer
     lateinit var image: TextureImage
-    lateinit var uniformDescriptors: UniformDescriptors
+    lateinit var imageSampler: Sampler
+
+    lateinit var descriptorPool: DescriptorPool
+    lateinit var descriptorSets: DescriptorSets
 
     private var currentFrame = 0
     private var framebufferResized = false
 
     private val vertices = arrayOf(
-        Vertex(Vector2f(-0.5f, -0.5f), Vector3f(1f, 0f, 0f)),
-        Vertex(Vector2f(0.5f, -0.5f), Vector3f(0f, 1f, 0f)),
-        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 0f, 1f)),
-        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 1f, 1f)),
+        Vertex(Vector2f(-0.5f, -0.5f), Vector3f(1f, 0f, 0f), Vector2f(1f, 0f)),
+        Vertex(Vector2f(0.5f, -0.5f), Vector3f(0f, 1f, 0f), Vector2f(0f, 0f)),
+        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 0f, 1f), Vector2f(0f, 1f)),
+        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 1f, 1f), Vector2f(1f, 1f)),
 //        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
 //        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
     )
@@ -77,10 +85,12 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
         image = TextureImage(device, physicalDevice, commands)
+        imageSampler = Sampler(device, physicalDevice)
         vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands)
         indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands)
         squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())
-        uniformDescriptors = UniformDescriptors(device, descriptorSetLayout, squareSizeBuffer)
+        descriptorPool = DescriptorPool(device)
+        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, squareSizeBuffer, image.view, imageSampler)
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
@@ -235,7 +245,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
-            val currentDescriptorSet = stack.longs(uniformDescriptors.descriptorSets[currentFrame])
+            val currentDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
 //            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
 //            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
             VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
