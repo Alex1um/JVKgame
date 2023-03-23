@@ -5,14 +5,13 @@ import VkRender.Device
 import VkRender.PhysicalDevice
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK13.*
-import org.lwjgl.vulkan.VkQueue
 import java.io.Closeable
 
 class IndexBuffer(
     val ldevice: Device,
     physicalDevice: PhysicalDevice,
-    indexes: Array<Int>,
     commandPool: CommandPool,
+    indexes: Array<Int>,
 ) : Closeable {
 
     val length = indexes.size

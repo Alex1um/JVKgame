@@ -1,9 +1,10 @@
-package VkRender
+package VkRender.Descriptors
 
-import VkRender.Descriptors.DescriptorPool
-import VkRender.Descriptors.DescriptorSetLayout
+import VkRender.Config
+import VkRender.Device
 import VkRender.Textures.ImageView
 import VkRender.Textures.Sampler
+import VkRender.Textures.TextureImage
 import VkRender.buffers.SquareSizeBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -14,7 +15,7 @@ import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 import java.io.Closeable
 
-class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: SquareSizeBuffer, imageView: ImageView, sampler: Sampler) : Closeable {
+class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: SquareSizeBuffer, texture: TextureImage) : Closeable {
 
     val descriptorSets = MemoryUtil.memCallocLong(Config.MAX_FRAMES_IN_FLIGHT)
 
@@ -44,8 +45,8 @@ class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descri
 
             val imageInfo = VkDescriptorImageInfo.calloc(1, stack)
                 .imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                .imageView(imageView.view)
-                .sampler(sampler.sampler)
+                .imageView(texture.view.view)
+                .sampler(texture.sampler.sampler)
 
             val descriptorWrite = VkWriteDescriptorSet.calloc(2, stack)
             val descriptorWritessb = descriptorWrite[0]

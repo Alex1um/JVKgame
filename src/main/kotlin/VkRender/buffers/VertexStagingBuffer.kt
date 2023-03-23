@@ -4,7 +4,6 @@ import VkRender.CommandPool
 import VkRender.Device
 import VkRender.PhysicalDevice
 import VkRender.Vertex
-import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 
@@ -13,7 +12,7 @@ class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, verti
     val buffer: Buffer
 
     init {
-        val bufferSize = (vertices.size * Vertex.SIZEOF).toLong()
+        val bufferSize = (vertices.size * Vertex.properties.SIZEOF).toLong()
         val stagingBuffer = Buffer(
             ldevice,
             physicalDevice,
