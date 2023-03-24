@@ -2,11 +2,11 @@ package VkRender
 
 import VkRender.Descriptors.DescriptorPool
 import VkRender.Descriptors.DescriptorSetLayout
+import VkRender.Descriptors.DescriptorSets
 import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
-import VkRender.Textures.ImageView
 import VkRender.Textures.Sampler
 import VkRender.Textures.TextureImage
 import VkRender.buffers.IndexBuffer
@@ -49,8 +49,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     lateinit var vertexBuffer: VertexStagingBuffer
     lateinit var indexBuffer: IndexBuffer
     lateinit var squareSizeBuffer: SquareSizeBuffer
-    lateinit var image: TextureImage
-    lateinit var imageSampler: Sampler
+    lateinit var texture: TextureImage
 
     lateinit var descriptorPool: DescriptorPool
     lateinit var descriptorSets: DescriptorSets
@@ -84,13 +83,14 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
-        image = TextureImage(device, physicalDevice, commands)
-        imageSampler = Sampler(device, physicalDevice)
+        texture = TextureImage(device, physicalDevice, commands, "build/resources/main/images/2.png")
         vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands)
-        indexBuffer = IndexBuffer(device, physicalDevice, indexes, commands)
+        indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
         squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())
         descriptorPool = DescriptorPool(device)
-        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, squareSizeBuffer, image.view, imageSampler)
+        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, squareSizeBuffer, texture)
+
+
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
