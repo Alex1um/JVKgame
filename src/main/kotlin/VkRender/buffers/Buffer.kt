@@ -59,9 +59,9 @@ class Buffer(
         }
     }
 
-    fun fill(vertixes: Array<Vertex>) {
+    fun fillVertices(vertixes: List<Vertex>) {
 
-        fun memcpy(buffer: ByteBuffer, array: Array<Vertex>) {
+        fun memcpy(buffer: ByteBuffer, array: List<Vertex>) {
 
             for (v in array) {
                 v.put(buffer)
@@ -73,9 +73,23 @@ class Buffer(
         vkUnmapMemory(ldevide.device, vertexBufferMemory)
     }
 
-    fun fill(indexes: Array<Int>) {
+    fun fill(vararg ints: Int) {
 
-        fun memcpy(buffer: ByteBuffer, array: Array<Int>) {
+        fun memcpy(buffer: ByteBuffer, vararg ints: Int) {
+
+            for (e in ints) {
+                buffer.putFloat(e.toFloat())
+            }
+        }
+
+        vkMapMemory(ldevide.device, vertexBufferMemory, 0, size, 0, Util.pp)
+        memcpy(Util.pp.getByteBuffer(0, size.toInt()), *ints)
+        vkUnmapMemory(ldevide.device, vertexBufferMemory)
+    }
+
+    fun fillIndices(indexes: List<Int>) {
+
+        fun memcpy(buffer: ByteBuffer, array: List<Int>) {
 
             fun ByteBuffer.put(v: Int) {
                this.putInt(v)
@@ -105,13 +119,13 @@ class Buffer(
     constructor(
         ldevide: Device,
         physicalDevice: PhysicalDevice,
-        vertixes: Array<Vertex>) : this(
+        vertixes: List<Vertex>) : this(
         ldevide,
         physicalDevice,
-        (vertixes.size * Vertex.SIZEOF).toLong(),
+        (vertixes.size * Vertex.properties.SIZEOF).toLong(),
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
-            this.fill(vertixes)
+            this.fillVertices(vertixes)
         }
 
     fun copyBuffer(ldevide: Device, commands: CommandPool, dest: Buffer) {

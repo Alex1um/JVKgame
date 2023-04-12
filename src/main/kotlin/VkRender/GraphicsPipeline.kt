@@ -1,6 +1,7 @@
 package VkRender
 
 import VkRender.Descriptors.DescriptorSetLayout
+import VkRender.GPUObjects.Properties
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
@@ -10,7 +11,8 @@ import java.io.Closeable
 class GraphicsPipeline(
     private val ldevice: Device,
     renderPass: RenderPass,
-    descriptorSetLayout: DescriptorSetLayout
+    descriptorSetLayout: DescriptorSetLayout,
+    vertexProperties: Properties
 ) : Closeable {
 
     val graphicsPipeLine: Long
@@ -43,8 +45,8 @@ class GraphicsPipeline(
                     .sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                     .pDynamicStates(dynamicStates)
 
-                val bindingDescription = Vertex.getBindingDescription(stack)
-                val attributeDescription = Vertex.getAttributeDescriptions(stack)
+                val bindingDescription = vertexProperties.getBindingDescription(stack, 0)
+                val attributeDescription = vertexProperties.getAttributeDescriptions(stack, 0)
 
                 val vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc()
                     .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)

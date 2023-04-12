@@ -8,7 +8,7 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 
-class SquareSizeBuffer(val ldevice: Device, physicalDevice: PhysicalDevice, MAX_FRAMES_IN_FLIGHT: Int, val size: Long) : Closeable {
+class UpdatingUniformBuffer(val ldevice: Device, physicalDevice: PhysicalDevice, MAX_FRAMES_IN_FLIGHT: Int, val size: Long) : Closeable {
 
     val buffers: MutableList<Buffer>
     val mapped = MemoryUtil.memCallocPointer(MAX_FRAMES_IN_FLIGHT)
@@ -35,10 +35,12 @@ class SquareSizeBuffer(val ldevice: Device, physicalDevice: PhysicalDevice, MAX_
         mapped.free()
     }
 
-    fun update(currentFrame: Int, width: Float, height: Float) {
+    fun update(currentFrame: Int, vararg floats: Float) {
         val bb = mapped.getByteBuffer(currentFrame, size.toInt())
-        bb.putFloat(width)
-        bb.putFloat(height)
+        for (e in floats) {
+            bb.putFloat(e)
+        }
+
     }
 
 }

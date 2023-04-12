@@ -4,27 +4,28 @@ import VkRender.GPUObjects.Properties
 import VkRender.GPUObjects.Vertex
 import org.joml.Vector2fc
 import org.joml.Vector3fc
+import org.joml.Vector4fc
 import org.lwjgl.vulkan.VK13
 import java.nio.ByteBuffer
 
 class Vertex(
     val pos: Vector2fc,
-    val color: Vector3fc,
+    var color: Vector4fc,
     val texCoord: Vector2fc,
 ) : Vertex() {
 
     companion object {
 
         val properties = Properties(
-            (2 + 3 + 2) * Float.SIZE_BYTES,
+            (2 + 4 + 2) * Float.SIZE_BYTES,
             arrayOf(
                 0,
                 2 * Float.SIZE_BYTES,
-                (2 + 3) * Float.SIZE_BYTES,
+                (2 + 4) * Float.SIZE_BYTES,
             ),
             arrayOf(
                 VK13.VK_FORMAT_R32G32_SFLOAT,
-                VK13.VK_FORMAT_R32G32B32_SFLOAT,
+                VK13.VK_FORMAT_R32G32B32A32_SFLOAT,
                 VK13.VK_FORMAT_R32G32_SFLOAT,
             )
         )
@@ -36,6 +37,7 @@ class Vertex(
         buffer.putFloat(color.x())
         buffer.putFloat(color.y())
         buffer.putFloat(color.z())
+        buffer.putFloat(color.w())
 
         buffer.putFloat(texCoord.x())
         buffer.putFloat(texCoord.y())

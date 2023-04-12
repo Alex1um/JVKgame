@@ -1,5 +1,6 @@
 package VkRender
 
+import View.LocalPlayerView
 import VkRender.Descriptors.DescriptorPool
 import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.Descriptors.DescriptorSets
@@ -7,24 +8,25 @@ import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
-import VkRender.Textures.Sampler
 import VkRender.Textures.TextureImage
 import VkRender.buffers.IndexBuffer
-import VkRender.buffers.SquareSizeBuffer
+import VkRender.buffers.UpdatingUniformBuffer
+import VkRender.buffers.VertexBuffer
 import VkRender.buffers.VertexStagingBuffer
 import org.joml.Vector2f
-import org.joml.Vector3f
+import org.joml.Vector4f
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.awt.AWTVKCanvas
 import org.lwjgl.vulkan.awt.VKData
-import java.awt.event.ComponentEvent
-import java.awt.event.ComponentListener
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.event.*
 import java.io.Closeable
 import kotlin.system.measureNanoTime
 
-class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
+class VkCanvas(private val instance: Instance, val controller: Controller.Controller) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
     Closeable {
 
     lateinit var sfc: Surface
@@ -46,9 +48,9 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         private set
     lateinit var imageAvailableSemaphore: Semaphores
     lateinit var renderFinishedSemaphore: Semaphores
-    lateinit var vertexBuffer: VertexStagingBuffer
-    lateinit var indexBuffer: IndexBuffer
-    lateinit var squareSizeBuffer: SquareSizeBuffer
+    private lateinit var vertexBuffer: VertexBuffer
+    private lateinit var indexBuffer: IndexBuffer
+    lateinit var updatingUniformBuffer: UpdatingUniformBuffer
     lateinit var texture: TextureImage
 
     lateinit var descriptorPool: DescriptorPool
@@ -57,20 +59,49 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
     private var currentFrame = 0
     private var framebufferResized = false
 
-    private val vertices = arrayOf(
-        Vertex(Vector2f(-0.5f, -0.5f), Vector3f(1f, 0f, 0f), Vector2f(1f, 0f)),
-        Vertex(Vector2f(0.5f, -0.5f), Vector3f(0f, 1f, 0f), Vector2f(0f, 0f)),
-        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 0f, 1f), Vector2f(0f, 1f)),
-        Vertex(Vector2f(-0.5f, 0.5f), Vector3f(1f, 1f, 1f), Vector2f(1f, 1f)),
+//    var vertices: Array<Vertex> = arrayOf(
+//        Vertex(Vector2f(-0.5f, -0.5f), Vector4f(1f, 0f, 0f, 1f), Vector2f(1f, -1f)),
+//        Vertex(Vector2f(0.5f, -0.5f), Vector4f(0f, 1f, 0f, 1f), Vector2f(-1f, -1f)),
+//        Vertex(Vector2f(0.5f, 0.5f), Vector4f(0f, 0f, 1f, 1f), Vector2f(-1f, 1f)),
+//        Vertex(Vector2f(-0.5f, 0.5f), Vector4f(1f, 1f, 1f, 1f), Vector2f(1f, 1f)),
+//
 //        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
 //        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
-    )
+//    )
+    val vertices: List<Vertex> = controller.localPlayerView.vertices
+//        set(value: Array<Vertex>) {
+//            field = value
+//            vertexBuffer.close()
+//            vertexBuffer = VertexStagingBuffer(device, physicalDevice, value, commands)
+//        }
 
-    private val indexes = arrayOf(
-        0, 1, 2, 2, 3, 0
-    )
+    //        arrayOf(
+//        0, 1, 2, 2, 3, 0
+//    )
+    var indexes: List<Int> = controller.localPlayerView.indexes
+        set(value) {
+            field = value
+            if (this::device.isInitialized) {
+                indexBuffer = IndexBuffer(device, physicalDevice, commands, value)
+            }
+        }
 
     override fun initVK() {
+        addMouseMotionListener(object : MouseAdapter() {
+            override fun mouseDragged(e: MouseEvent?) {
+                paint(graphics)
+                super.mouseDragged(e)
+            }
+        })
+        addMouseWheelListener(object: MouseWheelListener {
+            override fun mouseWheelMoved(p0: MouseWheelEvent?) {
+                paint(graphics)
+            }
+        })
+        addMouseListener(controller.areMouseAdapter);
+        addMouseMotionListener(controller.areMouseAdapter)
+        addMouseWheelListener(controller.areMouseAdapter)
+
         addComponentListener(this)
         sfc = NativeSurface(surface, instance)
         Util()
@@ -79,16 +110,17 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
         descriptorSetLayout = DescriptorSetLayout(device)
-        pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout)
+        pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout, Vertex.properties)
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
         texture = TextureImage(device, physicalDevice, commands, "build/resources/main/images/2.png")
-        vertexBuffer = VertexStagingBuffer(device, physicalDevice, vertices, commands)
+        vertexBuffer = VertexBuffer(device, physicalDevice, commands, vertices.size, Vertex.properties)
+
         indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
-        squareSizeBuffer = SquareSizeBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, (Int.SIZE_BYTES * 2).toLong())
+        updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 4L)
         descriptorPool = DescriptorPool(device)
-        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, squareSizeBuffer, texture)
+        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, texture)
 
 
 
@@ -99,12 +131,24 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
             renderFinishedSemaphore = Semaphores(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
         }
+//        vertices = controller.localPlayerView.vertices.toTypedArray()
+//        indexes = controller.localPlayerView.indexes.toTypedArray()
+        for (frame in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
+            updatingUniformBuffer.update(
+                frame,
+                controller.localPlayerView.camera_rect_tiles.x.toFloat(),
+                controller.localPlayerView.camera_rect_tiles.y.toFloat(),
+                controller.localPlayerView.camera_rect_tiles.width.toFloat(),
+                controller.localPlayerView.camera_rect_tiles.height.toFloat(),
+            )
+        }
     }
 
     override fun paintVK() {
 
         val time = measureNanoTime {
             MemoryStack.stackPush().use { stack ->
+
                 VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
 
 //            vkResetFences(device, inFlightFence)
@@ -133,7 +177,16 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
 
                 VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-                squareSizeBuffer.update(currentFrame, 1 / this.width.toFloat(), 1 / this.height.toFloat())
+                updatingUniformBuffer.update(
+                    currentFrame,
+                    controller.localPlayerView.camera_rect_tiles.x.toFloat(),
+                    controller.localPlayerView.camera_rect_tiles.y.toFloat(),
+                    controller.localPlayerView.camera_rect_tiles.width.toFloat(),
+                    controller.localPlayerView.camera_rect_tiles.height.toFloat(),
+                )
+                
+                vertexBuffer.update(vertices)
+
                 record(currentFrame, imageIndex)
 
                 val lp2 = stack.mallocLong(1)
@@ -172,6 +225,11 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
                     throw IllegalStateException("failed to present swap chain image!")
                 }
                 currentFrame = (currentFrame + 1) % Config.MAX_FRAMES_IN_FLIGHT
+
+//                val selectionRect = controller.selectionRect
+//                if (controller.isSelecting) {
+//                    this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
+//                }
             }
         }
 //        println("fps: ${1e9 / time}")
@@ -246,6 +304,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
             val currentDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
+
 //            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
 //            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
             VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
@@ -255,6 +314,10 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
             VK13.vkCmdEndRenderPass(currentCommandBuffer)
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")
+            }
+            val selectionRect = controller.selectionRect
+            if (controller.isSelecting) {
+                this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
             }
         }
     }
@@ -280,7 +343,7 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         pipeline.close()
         vertexBuffer.close()
         indexBuffer.close()
-        squareSizeBuffer.close()
+        updatingUniformBuffer.close()
         renderPass.close()
         swapChain.close()
         device.close()
@@ -288,6 +351,5 @@ class VkCanvas(private val instance: Instance) : AWTVKCanvas(VKData().also { it.
         sfc.close()
 //        instance.close()
     }
-
 
 }

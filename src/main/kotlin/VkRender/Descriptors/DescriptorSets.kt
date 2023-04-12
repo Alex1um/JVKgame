@@ -2,10 +2,8 @@ package VkRender.Descriptors
 
 import VkRender.Config
 import VkRender.Device
-import VkRender.Textures.ImageView
-import VkRender.Textures.Sampler
 import VkRender.Textures.TextureImage
-import VkRender.buffers.SquareSizeBuffer
+import VkRender.buffers.UpdatingUniformBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
@@ -15,7 +13,7 @@ import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 import java.io.Closeable
 
-class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: SquareSizeBuffer, texture: TextureImage) : Closeable {
+class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: UpdatingUniformBuffer, texture: TextureImage) : Closeable {
 
     val descriptorSets = MemoryUtil.memCallocLong(Config.MAX_FRAMES_IN_FLIGHT)
 

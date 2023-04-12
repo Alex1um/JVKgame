@@ -7,7 +7,7 @@ import VkRender.Vertex
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 
-class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: Array<Vertex>, commands: CommandPool) : Closeable {
+class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: List<Vertex>, commands: CommandPool) : Closeable {
 
     val buffer: Buffer
 
@@ -20,7 +20,7 @@ class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, verti
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT or VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 
-        stagingBuffer.fill(vertices)
+        stagingBuffer.fillVertices(vertices)
 
         buffer = Buffer(
             ldevice,
