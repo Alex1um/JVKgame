@@ -1,6 +1,7 @@
 package VkRender.Descriptors
 
 import VkRender.Device
+import VkRender.Textures.Images
 import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK13.*
@@ -8,7 +9,7 @@ import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding
 import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo
 import java.io.Closeable
 
-class DescriptorSetLayout(val ldevice: Device) : Closeable {
+class DescriptorSetLayout(val ldevice: Device, textures: Images) : Closeable {
 
     val descriptorSetLayout: Long
 
@@ -16,7 +17,7 @@ class DescriptorSetLayout(val ldevice: Device) : Closeable {
 
         MemoryStack.stackPush().use { stack ->
 
-            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(2, stack)
+            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(3, stack)
             ssLayoutBinding[0]
                 .binding(0)
                 .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -26,7 +27,13 @@ class DescriptorSetLayout(val ldevice: Device) : Closeable {
             ssLayoutBinding[1]
                 .binding(1)
                 .descriptorCount(1)
-                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLER)
+                .pImmutableSamplers(null)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+            ssLayoutBinding[2]
+                .binding(2)
+                .descriptorCount(textures.size)
+                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
                 .pImmutableSamplers(null)
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
 

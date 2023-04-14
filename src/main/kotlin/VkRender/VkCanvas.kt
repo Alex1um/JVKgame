@@ -8,6 +8,8 @@ import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
+import VkRender.Textures.Images
+import VkRender.Textures.Sampler
 import VkRender.Textures.TextureImage
 import VkRender.buffers.IndexBuffer
 import VkRender.buffers.UpdatingUniformBuffer
@@ -51,7 +53,8 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
     private lateinit var vertexBuffer: VertexBuffer
     private lateinit var indexBuffer: IndexBuffer
     lateinit var updatingUniformBuffer: UpdatingUniformBuffer
-    lateinit var texture: TextureImage
+    lateinit var textures: Images
+    lateinit var sampler: Sampler
 
     lateinit var descriptorPool: DescriptorPool
     lateinit var descriptorSets: DescriptorSets
@@ -59,25 +62,8 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
     private var currentFrame = 0
     private var framebufferResized = false
 
-//    var vertices: Array<Vertex> = arrayOf(
-//        Vertex(Vector2f(-0.5f, -0.5f), Vector4f(1f, 0f, 0f, 1f), Vector2f(1f, -1f)),
-//        Vertex(Vector2f(0.5f, -0.5f), Vector4f(0f, 1f, 0f, 1f), Vector2f(-1f, -1f)),
-//        Vertex(Vector2f(0.5f, 0.5f), Vector4f(0f, 0f, 1f, 1f), Vector2f(-1f, 1f)),
-//        Vertex(Vector2f(-0.5f, 0.5f), Vector4f(1f, 1f, 1f, 1f), Vector2f(1f, 1f)),
-//
-//        Vertex(Vector2f(0f, -1f), Vector3f(1f, 1f, 0f)),
-//        Vertex(Vector2f(0.5f, 0.5f), Vector3f(0f, 1f, 0f)),
-//    )
     val vertices: List<Vertex> = controller.localPlayerView.vertices
-//        set(value: Array<Vertex>) {
-//            field = value
-//            vertexBuffer.close()
-//            vertexBuffer = VertexStagingBuffer(device, physicalDevice, value, commands)
-//        }
 
-    //        arrayOf(
-//        0, 1, 2, 2, 3, 0
-//    )
     var indexes: List<Int> = controller.localPlayerView.indexes
         set(value) {
             field = value
@@ -109,20 +95,25 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
         device = Device(physicalDevice)
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
-        descriptorSetLayout = DescriptorSetLayout(device)
+
+        textures = Images(
+            "build/resources/main/images/Grass1.png",
+            "build/resources/main/images/Structure1.png",
+        )
+        descriptorSetLayout = DescriptorSetLayout(device, textures)
         pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout, Vertex.properties)
         commands = CommandPool(device, physicalDevice)
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
-        texture = TextureImage(device, physicalDevice, commands, "build/resources/main/images/2.png")
+        textures.init(device, physicalDevice, commands)
+        sampler = Sampler(device, physicalDevice)
+
         vertexBuffer = VertexBuffer(device, physicalDevice, commands, vertices.size, Vertex.properties)
 
         indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
         updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 4L)
         descriptorPool = DescriptorPool(device)
-        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, texture)
-
-
+        descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, sampler, textures)
 
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(Config.MAX_FRAMES_IN_FLIGHT, device, stack)

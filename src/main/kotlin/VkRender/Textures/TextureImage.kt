@@ -16,7 +16,7 @@ class TextureImage(val ldevice: Device, physicalDevice: PhysicalDevice, commands
     val height: Int
     val image: Image
     val view: ImageView
-    val sampler: Sampler
+//    val sampler: Sampler
 
     init {
         MemoryStack.stackPush().use { stack ->
@@ -27,8 +27,7 @@ class TextureImage(val ldevice: Device, physicalDevice: PhysicalDevice, commands
                 ?: throw IllegalStateException("Cannot load image")
             width = pwidth[0]
             height = pheight[0]
-
-            size = pwidth[0] * pheight[0] * /*always 4 due to stbi_rgb_alpha*/ pchannels[0]
+            size = pwidth[0] * pheight[0] * /*always 4 due to stbi_rgb_alpha*/ 4
 
             val stagingBuffer = VkRender.buffers.Buffer(
                 ldevice, physicalDevice, size.toLong(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -60,13 +59,13 @@ class TextureImage(val ldevice: Device, physicalDevice: PhysicalDevice, commands
 
             view = ImageView(ldevice, stack, image, VK_FORMAT_R8G8B8A8_SRGB)
 
-            sampler = Sampler(ldevice, physicalDevice)
+//            sampler = Sampler(ldevice, physicalDevice)
         }
     }
 
     override fun close() {
         view.close()
         image.close()
-        sampler.close()
+//        sampler.close()
     }
 }

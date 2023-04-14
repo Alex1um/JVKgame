@@ -2,6 +2,8 @@ package VkRender.Descriptors
 
 import VkRender.Config
 import VkRender.Device
+import VkRender.Textures.Images
+import VkRender.Textures.Sampler
 import VkRender.Textures.TextureImage
 import VkRender.buffers.UpdatingUniformBuffer
 import org.lwjgl.system.MemoryStack
@@ -13,7 +15,7 @@ import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 import java.io.Closeable
 
-class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: UpdatingUniformBuffer, texture: TextureImage) : Closeable {
+class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descriptorSetLayout: DescriptorSetLayout, ssb: UpdatingUniformBuffer, sampler: Sampler, textures: Images) : Closeable {
 
     val descriptorSets = MemoryUtil.memCallocLong(Config.MAX_FRAMES_IN_FLIGHT)
 
@@ -41,12 +43,18 @@ class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descri
                 .offset(0)
                 .range(ssb.size)
 
-            val imageInfo = VkDescriptorImageInfo.calloc(1, stack)
-                .imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                .imageView(texture.view.view)
-                .sampler(texture.sampler.sampler)
+            val imageInfo = VkDescriptorImageInfo.calloc(textures.size, stack)
+            for ((i: Int, texture) in textures.textures.withIndex()) {
+                imageInfo[i].imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                    .imageView(texture.view.view)
+                    .sampler(0)
+//                    .sampler(texture.sampler.sampler)
+            }
 
-            val descriptorWrite = VkWriteDescriptorSet.calloc(2, stack)
+            val samplerInfo = VkDescriptorImageInfo.calloc(1, stack)
+                .sampler(sampler.sampler)
+
+            val descriptorWrite = VkWriteDescriptorSet.calloc(3, stack)
             val descriptorWritessb = descriptorWrite[0]
             descriptorWritessb
                 .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
@@ -64,16 +72,27 @@ class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descri
                 .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                 .dstBinding(1)
                 .dstArrayElement(0)
-                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLER)
                 .descriptorCount(1)
+                .pImageInfo(samplerInfo)
+
+            val descriptorWriteImages = descriptorWrite[2]
+            descriptorWriteImages
+                .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
+                .dstBinding(2)
+                .dstArrayElement(0)
+                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+                .descriptorCount(textures.size)
                 .pImageInfo(imageInfo)
 
             for (i in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
                 bufferInfo.buffer(ssb.buffers[i].vertexBuffer)
 
-                descriptorWrite.dstSet(descriptorSets[i])
+                descriptorWritessb.dstSet(descriptorSets[i])
 
                 descriptorWriteSampler.dstSet(descriptorSets[i])
+
+                descriptorWriteImages.dstSet(descriptorSets[i])
 
                 vkUpdateDescriptorSets(ldevice.device, descriptorWrite, null)
             }
