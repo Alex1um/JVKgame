@@ -177,13 +177,15 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
 
                 VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-                updatingUniformBuffer.update(
-                    currentFrame,
-                    controller.localPlayerView.camera_rect_tiles.x.toFloat(),
-                    controller.localPlayerView.camera_rect_tiles.y.toFloat(),
-                    controller.localPlayerView.camera_rect_tiles.width.toFloat(),
-                    controller.localPlayerView.camera_rect_tiles.height.toFloat(),
-                )
+                if (controller.isCameraMoving || controller.isCameraScaled) {
+                    updatingUniformBuffer.update(
+                        currentFrame,
+                        controller.localPlayerView.camera_rect_tiles.x.toFloat(),
+                        controller.localPlayerView.camera_rect_tiles.y.toFloat(),
+                        controller.localPlayerView.camera_rect_tiles.width.toFloat(),
+                        controller.localPlayerView.camera_rect_tiles.height.toFloat(),
+                    )
+                }
                 
                 vertexBuffer.update(vertices)
 

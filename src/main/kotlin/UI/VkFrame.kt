@@ -12,7 +12,7 @@ import VkRender.buffers.IndexBuffer
 import java.awt.BorderLayout
 import java.awt.Dimension
 
-class VkFrame(title: String, controller: Controller) {
+class VkFrame(title: String, val controller: Controller) {
 
     private val frame: JFrame
     private val vkInstance: Instance

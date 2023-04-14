@@ -6,10 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+// User input / output processing
 public class Controller {
 
     public final class AreaMouseAdapter extends MouseAdapter {
@@ -62,29 +64,42 @@ public class Controller {
        public void mouseWheelMoved(MouseWheelEvent e) {
             if (e != null) {
                 localPlayerView.scale(e.getPreciseWheelRotation());
+                isCameraScaled = true;
             }
        }
 
     }
 
-    public AreaMouseAdapter getAreMouseAdapter() {
-        return areMouseAdapter;
+    // Camera scale
+    private boolean isCameraScaled = false;
+    public boolean isCameraScaled() {
+        if (isCameraScaled) {
+            isCameraScaled = false;
+            return true;
+        }
+        return isCameraScaled;
     }
 
-    private final AreaMouseAdapter areMouseAdapter = new AreaMouseAdapter();
-
+    // Camera movement
     @Nullable
     private Point cameraMovementStartingPoint = null;
+
     @Nullable
     private Point cameraStartingPoint = null;
 
+    private boolean isCameraMoving = false;
+
+    public boolean isCameraMoving() {
+        return isCameraMoving;
+    }
+
+    // Selection
+    @NotNull
+    private final Rectangle selectionRect = new Rectangle();
     @NotNull
     public Rectangle getSelectionRect() {
         return selectionRect;
     }
-
-    @NotNull
-    private final Rectangle selectionRect = new Rectangle();
 
     @Nullable
     Point selectionStartingPoint = null;
@@ -93,20 +108,25 @@ public class Controller {
         return selectionStartingPoint != null;
     }
 
+    // ADapter
+
+    private final AreaMouseAdapter areMouseAdapter = new AreaMouseAdapter();
+
+    public AreaMouseAdapter getAreMouseAdapter() {
+        return areMouseAdapter;
+    }
+
+    // View
     public LocalPlayerView getLocalPlayerView() {
         return localPlayerView;
     }
 
     private final LocalPlayerView localPlayerView;
 
-    public boolean isCameraMoving() {
-        return isCameraMoving;
-    }
+    private final List<Object> actionsBuffer;
 
-    private boolean isCameraMoving = false;
-
-
-    public Controller(GameMap map, int widthCells, int heightCells) {
+    public Controller(GameMap map, List<Object> actionsBuffer, int widthCells, int heightCells) {
+        this.actionsBuffer = actionsBuffer;
         localPlayerView = new LocalPlayerView(0, 0, widthCells, heightCells, 20);
         generatePlayerView(map);
     }

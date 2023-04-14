@@ -1,5 +1,7 @@
 package GameMap.Units;
 
+import Controller.Players.Player;
+
 public class Unit {
 
     public int getHp() {
@@ -34,6 +36,7 @@ public class Unit {
     int hp;
     int maxHp;
 
+    Player owner;
     int textureId;
 
 

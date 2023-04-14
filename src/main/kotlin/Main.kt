@@ -1,4 +1,5 @@
 
+import View.LocalPlayerView
 import VkRender.*
 import java.awt.*
 import javax.swing.JFrame
@@ -13,9 +14,9 @@ fun main(args: Array<String>) {
     frame.layout = BorderLayout()
     frame.preferredSize = Dimension(800, 600)
 
-    val canvas = VkCanvas(instance)
+//    val canvas = VkCanvas(instance, LocalPlayerView(400, 300, 800, 600, 1));
 //    val canvas = Canvas()
-    frame.add(canvas, BorderLayout.CENTER)
+//    frame.add(canvas, BorderLayout.CENTER)
     val label = Label("I'm label!")
     label.setBounds(400, 200, 100, 20)
     frame.layeredPane.add(label)
