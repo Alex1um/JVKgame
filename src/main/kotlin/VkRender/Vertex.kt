@@ -1,9 +1,8 @@
 package VkRender
 
 import VkRender.GPUObjects.Properties
-import VkRender.GPUObjects.Vertex
+import VkRender.GPUObjects.GPUObject
 import org.joml.Vector2fc
-import org.joml.Vector3fc
 import org.joml.Vector4fc
 import org.lwjgl.vulkan.VK13
 import java.nio.ByteBuffer
@@ -12,21 +11,24 @@ class Vertex(
     val pos: Vector2fc,
     var color: Vector4fc,
     val texCoord: Vector2fc,
-) : Vertex() {
+    val textureIndex: Int,
+) : GPUObject() {
 
     companion object {
 
         val properties = Properties(
-            (2 + 4 + 2) * Float.SIZE_BYTES,
+            (2 + 4 + 2) * Float.SIZE_BYTES + Int.SIZE_BYTES,
             arrayOf(
                 0,
                 2 * Float.SIZE_BYTES,
                 (2 + 4) * Float.SIZE_BYTES,
+                (2 + 4 + 2) * Float.SIZE_BYTES,
             ),
             arrayOf(
                 VK13.VK_FORMAT_R32G32_SFLOAT,
                 VK13.VK_FORMAT_R32G32B32A32_SFLOAT,
                 VK13.VK_FORMAT_R32G32_SFLOAT,
+                VK13.VK_FORMAT_R32_SINT,
             )
         )
     }
@@ -41,6 +43,8 @@ class Vertex(
 
         buffer.putFloat(texCoord.x())
         buffer.putFloat(texCoord.y())
+
+        buffer.putInt(textureIndex)
     }
 
 }

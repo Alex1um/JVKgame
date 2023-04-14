@@ -10,12 +10,16 @@ import org.joml.Vector2f;
 public abstract class Tile {
     Matrix4f color;
 
+    protected Tile(int textureIndex) {
+        this.textureIndex = textureIndex;
+    }
+
     public Vertex getVertex(int x, int y) {
         return vertexes[y][x];
     }
 
      Vertex[][] vertexes = new Vertex[2][2];
-    int textureIndex;
+    final int textureIndex;
 
 
     int vertexesIndex;
@@ -42,7 +46,8 @@ public abstract class Tile {
                                 (tileRelativeBlockY * tileSizePX + y * tileSizePX)
                                 ),
                         tileColor,
-                        new Vector2f(x, y)
+                        new Vector2f(x, y),
+                        textureIndex
                 );
             }
         }
