@@ -81,7 +81,7 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                     VK13.vkEnumeratePhysicalDevices(instance, ip, physicalDevices)
 
                     var is_gpu_found = false
-                    for (i in 1 until physicalDevices.capacity()) {
+                    for (i in 1 until physicalDevices.capacity() - 1) {
                         val tmp_dev = VkPhysicalDevice(physicalDevices[i], instance)
 
                         val indices = QueueFamilyIndices(stack, tmp_dev, surface)

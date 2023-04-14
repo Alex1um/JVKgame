@@ -49,12 +49,15 @@ class Device(physicalDevice: PhysicalDevice): Closeable {
                 ptrBuf.put(VK_KHR_SWAPCHAIN_EXTENSION)
                 ptrBuf.flip()
 
+                val layers = stack.pointers(1)
+                layers.put(stack.UTF8("VK_LAYER_KHRONOS_validation"))
+
                 val device_info = VkDeviceCreateInfo.malloc(stack)
                     .sType(VK13.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                     .pQueueCreateInfos(queue)
                     .pEnabledFeatures(features)
+                    .ppEnabledLayerNames(layers)
                     .ppEnabledExtensionNames(ptrBuf)
-                    .ppEnabledLayerNames(null)
 
                 val code = VK13.vkCreateDevice(physicalDevice.physicalDevice, device_info, null, pp)
                 if (code != VK13.VK_SUCCESS) {
