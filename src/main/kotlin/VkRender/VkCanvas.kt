@@ -28,7 +28,7 @@ import java.awt.event.*
 import java.io.Closeable
 import kotlin.system.measureNanoTime
 
-class VkCanvas(private val instance: Instance, val controller: Controller.Controller) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
+class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, val localPlayerView: LocalPlayerView) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
     Closeable {
 
     lateinit var sfc: Surface
@@ -62,9 +62,9 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
     private var currentFrame = 0
     private var framebufferResized = false
 
-    val vertices: List<Vertex> = controller.localPlayerView.vertices
+    val vertices: List<Vertex> = localPlayerView.vertices
 
-    var indexes: List<Int> = controller.localPlayerView.indexes
+    var indexes: List<Int> = localPlayerView.indexes
         set(value) {
             field = value
             if (this::device.isInitialized) {
@@ -84,9 +84,9 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
                 paint(graphics)
             }
         })
-        addMouseListener(controller.areMouseAdapter);
-        addMouseMotionListener(controller.areMouseAdapter)
-        addMouseWheelListener(controller.areMouseAdapter)
+        addMouseListener(mouseAdapter);
+        addMouseMotionListener(mouseAdapter)
+        addMouseWheelListener(mouseAdapter)
 
         addComponentListener(this)
         sfc = NativeSurface(surface, instance)
@@ -127,10 +127,10 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
         for (frame in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
             updatingUniformBuffer.update(
                 frame,
-                controller.localPlayerView.camera_rect_tiles.x.toFloat(),
-                controller.localPlayerView.camera_rect_tiles.y.toFloat(),
-                controller.localPlayerView.camera_rect_tiles.width.toFloat(),
-                controller.localPlayerView.camera_rect_tiles.height.toFloat(),
+                localPlayerView.camera_rect_tiles.x.toFloat(),
+                localPlayerView.camera_rect_tiles.y.toFloat(),
+                localPlayerView.camera_rect_tiles.width.toFloat(),
+                localPlayerView.camera_rect_tiles.height.toFloat(),
             )
         }
     }
@@ -168,13 +168,13 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
 
                 VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-                if (controller.isCameraMoving || controller.isCameraScaled) {
+                if (localPlayerView.isCameraMoving || localPlayerView.isCameraScaled) {
                     updatingUniformBuffer.update(
                         currentFrame,
-                        controller.localPlayerView.camera_rect_tiles.x.toFloat(),
-                        controller.localPlayerView.camera_rect_tiles.y.toFloat(),
-                        controller.localPlayerView.camera_rect_tiles.width.toFloat(),
-                        controller.localPlayerView.camera_rect_tiles.height.toFloat(),
+                        localPlayerView.camera_rect_tiles.x.toFloat(),
+                        localPlayerView.camera_rect_tiles.y.toFloat(),
+                        localPlayerView.camera_rect_tiles.width.toFloat(),
+                        localPlayerView.camera_rect_tiles.height.toFloat(),
                     )
                 }
                 
@@ -308,8 +308,8 @@ class VkCanvas(private val instance: Instance, val controller: Controller.Contro
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")
             }
-            val selectionRect = controller.selectionRect
-            if (controller.isSelecting) {
+            val selectionRect = localPlayerView.selectionRect
+            if (localPlayerView.isSelecting()) {
                 this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
             }
         }

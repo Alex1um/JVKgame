@@ -11,8 +11,9 @@ import VkRender.VkCanvas
 import VkRender.buffers.IndexBuffer
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.MouseAdapter
 
-class VkFrame(title: String, val controller: Controller) {
+class VkFrame(title: String, mouseAdapter: MouseAdapter, localPlayerView: LocalPlayerView) {
 
     private val frame: JFrame
     private val vkInstance: Instance
@@ -27,7 +28,7 @@ class VkFrame(title: String, val controller: Controller) {
 
         frame.preferredSize = Dimension(800, 800)
 
-        canvas = VkCanvas(vkInstance, controller)
+        canvas = VkCanvas(vkInstance, mouseAdapter, localPlayerView)
         frame.add(canvas, BorderLayout.CENTER)
 
         frame.pack()

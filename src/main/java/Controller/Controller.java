@@ -1,5 +1,7 @@
 package Controller;
 
+import GameMap.Blocks.Block;
+import GameMap.Blocks.Structures.Temple;
 import GameMap.GameMap;
 import View.LocalPlayerView;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,22 @@ public class Controller {
                     cameraStartingPoint = null;
                     isCameraMoving = false;
                 }
+            }
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (e != null) {
+                Point mouse = e.getPoint();
+                Rectangle camera = localPlayerView.getCamera_rect_tiles();
+                Point relCords = new Point(mouse.x + camera.x, mouse.y + camera.y);
+                System.out.println(String.valueOf(camera.x) + " " + String.valueOf(camera.y));
+                // TODO add check
+                System.out.print((relCords.x / map.getSize() / 20));
+                System.out.print(" ");
+                System.out.println(relCords.x / map.getSize() / 20);
+                Block block = map.getBlock(relCords.x / map.getSize() / 20, relCords.y / map.getSize() / 20);
+                block.placeStructure(new Temple());
             }
         }
 
@@ -125,9 +143,12 @@ public class Controller {
 
     private final List<Object> actionsBuffer;
 
+    private final GameMap map;
+
     public Controller(GameMap map, List<Object> actionsBuffer, int widthCells, int heightCells) {
         this.actionsBuffer = actionsBuffer;
         localPlayerView = new LocalPlayerView(0, 0, widthCells, heightCells, 20);
+        this.map = map;
         generatePlayerView(map);
     }
 

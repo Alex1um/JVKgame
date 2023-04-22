@@ -1,13 +1,10 @@
 package View
 
-import java.awt.Rectangle
 import GameMap.GameMap
 import VkRender.Vertex
-import org.joml.Vector2f
-import org.joml.Vector3f
-import org.joml.Vector4f
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -116,4 +113,29 @@ class LocalPlayerView internal constructor(
         }
         return indexes
     }
+
+    var isCameraMoving = false;
+
+    // Selection
+    val selectionRect = Rectangle()
+
+    var isCameraScaled = false
+        get() {
+            if (field) {
+                field = false
+                return true
+            }
+            return field
+        }
+
+    var cameraMovementStartingPoint: Point? = null
+
+    var cameraStartingPoint: Point? = null
+
+    var selectionStartingPoint: Point? = null
+
+    fun isSelecting(): Boolean {
+        return selectionStartingPoint != null
+    }
+
 }

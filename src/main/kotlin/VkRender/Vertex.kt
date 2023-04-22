@@ -8,10 +8,10 @@ import org.lwjgl.vulkan.VK13
 import java.nio.ByteBuffer
 
 class Vertex(
-    val pos: Vector2fc,
+    var pos: Vector2fc,
     var color: Vector4fc,
     val texCoord: Vector2fc,
-    val textureIndex: Int,
+    var textureIndex: Int,
 ) : GPUObject() {
 
     companion object {

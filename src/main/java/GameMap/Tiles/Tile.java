@@ -19,8 +19,16 @@ public abstract class Tile {
     }
 
      Vertex[][] vertexes = new Vertex[2][2];
+
+    public int getTextureIndex() {
+        return textureIndex;
+    }
+
     final int textureIndex;
 
+    public int getVertexesIndex() {
+        return vertexesIndex;
+    }
 
     int vertexesIndex;
     public void setVertexesIndex(int vertexesIndex) {

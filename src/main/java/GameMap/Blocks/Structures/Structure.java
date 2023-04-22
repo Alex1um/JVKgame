@@ -1,14 +1,16 @@
 package GameMap.Blocks.Structures;
 
+import GameMap.Blocks.Block;
+import GameMap.Tiles.StructureTile;
+import GameMap.Tiles.Tile;
+import VkRender.Util;
+
 public abstract class Structure {
-    int x;
-    int y;
 
-    public int getY() {
-        return y;
+    public final int textureIndex;
+
+    protected Structure(int textureIndex) {
+        this.textureIndex = textureIndex;
     }
 
-    public int getX() {
-        return x;
-    }
 }
