@@ -28,7 +28,7 @@ import java.awt.event.*
 import java.io.Closeable
 import kotlin.system.measureNanoTime
 
-class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, val localPlayerView: LocalPlayerView) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
+class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerView) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
     Closeable {
 
     lateinit var sfc: Surface
@@ -84,9 +84,9 @@ class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, v
                 paint(graphics)
             }
         })
-        addMouseListener(mouseAdapter);
-        addMouseMotionListener(mouseAdapter)
-        addMouseWheelListener(mouseAdapter)
+//        addMouseListener(mouseAdapter);
+//        addMouseMotionListener(mouseAdapter)
+//        addMouseWheelListener(mouseAdapter)
 
         addComponentListener(this)
         sfc = NativeSurface(surface, instance)
@@ -127,10 +127,10 @@ class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, v
         for (frame in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
             updatingUniformBuffer.update(
                 frame,
-                localPlayerView.camera_rect_tiles.x.toFloat(),
-                localPlayerView.camera_rect_tiles.y.toFloat(),
-                localPlayerView.camera_rect_tiles.width.toFloat(),
-                localPlayerView.camera_rect_tiles.height.toFloat(),
+                localPlayerView.camera.offsetX,
+                localPlayerView.camera.offsetY,
+                localPlayerView.camera.scale,
+                800f
             )
         }
     }
@@ -168,15 +168,15 @@ class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, v
 
                 VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-                if (localPlayerView.isCameraMoving || localPlayerView.isCameraScaled) {
-                    updatingUniformBuffer.update(
-                        currentFrame,
-                        localPlayerView.camera_rect_tiles.x.toFloat(),
-                        localPlayerView.camera_rect_tiles.y.toFloat(),
-                        localPlayerView.camera_rect_tiles.width.toFloat(),
-                        localPlayerView.camera_rect_tiles.height.toFloat(),
-                    )
-                }
+//                if (localPlayerView.isCameraMoving || localPlayerView.isCameraScaled) {
+                updatingUniformBuffer.update(
+                    currentFrame,
+                    localPlayerView.camera.offsetX,
+                    localPlayerView.camera.offsetY,
+                    localPlayerView.camera.scale,
+                    800f
+                )
+//                }
                 
                 vertexBuffer.update(vertices)
 
@@ -308,10 +308,10 @@ class VkCanvas(private val instance: Instance, val mouseAdapter: MouseAdapter, v
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")
             }
-            val selectionRect = localPlayerView.selectionRect
-            if (localPlayerView.isSelecting()) {
-                this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
-            }
+//            val selectionRect = localPlayerView.selectionRect
+//            if (localPlayerView.isSelecting()) {
+//                this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
+//            }
         }
     }
 

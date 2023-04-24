@@ -81,7 +81,7 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                     VK13.vkEnumeratePhysicalDevices(instance, ip, physicalDevices)
 
                     var is_gpu_found = false
-                    for (i in 1 until physicalDevices.capacity() - 1) {
+                    for (i in 1 until physicalDevices.capacity()) {
                         val tmp_dev = VkPhysicalDevice(physicalDevices[i], instance)
 
                         val indices = QueueFamilyIndices(stack, tmp_dev, surface)
@@ -92,8 +92,8 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                             graphicsFamily = indices.graphicsFamily!!
                             presentFamily = indices.presentFamily!!
 
-//                            VK13.vkGetPhysicalDeviceProperties(physicalDevice, properties)
-//                            VK13.vkGetPhysicalDeviceFeatures(physicalDevice, features)
+                            VK13.vkGetPhysicalDeviceProperties(physicalDevice, properties)
+                            VK13.vkGetPhysicalDeviceFeatures(physicalDevice, features)
 
 //                            println("choose ${StandardCharsets.UTF_8.decode(properties.deviceName()).toString().substringBefore("\\u0000")}?")
 //                            val ans = readln()
@@ -106,8 +106,8 @@ class PhysicalDevice(vkinstance: Instance, surface: Surface) : Closeable {
                         throw IllegalStateException("Gpu with vulkan support not found")
                     }
 
-                    VK13.vkGetPhysicalDeviceProperties(physicalDevice, properties)
-                    VK13.vkGetPhysicalDeviceFeatures(physicalDevice, features)
+//                    VK13.vkGetPhysicalDeviceProperties(physicalDevice, properties)
+//                    VK13.vkGetPhysicalDeviceFeatures(physicalDevice, features)
 
                     println(
                         "Using gpu: ${

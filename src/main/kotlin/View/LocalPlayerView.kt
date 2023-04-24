@@ -9,56 +9,59 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 class LocalPlayerView internal constructor(
-    view_init_center_tile_x: Int,
-    view_init_center_tile_y: Int,
-    val max_width_tiles: Int,
-    val max_height_tiles: Int,
-    val tileSizePX: Int
+    gameMap: GameMap,
+    cameraInitPoint: Point,
+    val tileSizePX: Int = 20,
 ) {
-    val camera_rect_tiles: Rectangle
 
-    val indexes = mutableListOf(max_width_tiles * max_height_tiles)
+    companion object Consts {
+        private const val MAX_SCALE = 0.05f
+        private const val MIN_SCALE = 0.005f
+        // Скорость перемещения и масштабирования
+        private const val MOVE_SPEED = 50.0f
+        private const val SCALE_SPEED = 0.001f
+    }
+
+    inner class Camera(
+        var offsetX: Float = 0f,
+        var offsetY: Float = 0f,
+        var scale: Float = MIN_SCALE,
+    ) {
+
+        fun move(dx: Int, dy: Int) {
+            offsetX += dx * scale
+            offsetY += dy * scale
+        }
+
+        fun zoomIn() {
+            scale += Consts.SCALE_SPEED
+            if (scale > Consts.MAX_SCALE) {
+                scale = Consts.MAX_SCALE
+            }
+        }
+
+        fun zoomOut() {
+            scale -= Consts.SCALE_SPEED
+            if (scale < Consts.MIN_SCALE) {
+                scale = Consts.MIN_SCALE
+            }
+        }
+
+    }
+
+    val indexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
         get;
 
-    private val baseSize: Dimension = Dimension(
-        floor(max_width_tiles * tileSizePX / 2f).toInt(),
-        floor(max_height_tiles * tileSizePX / 2f).toInt()
-    )
-
-    init {
-        camera_rect_tiles = Rectangle(
-            view_init_center_tile_x - ceil(max_width_tiles / 2f).toInt(),
-            view_init_center_tile_y - ceil(max_height_tiles / 2f).toInt(),
-            baseSize.width,
-            baseSize.height
-        )
-    }
     val vertices: MutableList<Vertex> = mutableListOf();
 
-    fun setCameraCoords(x: Int, y: Int) {
-        camera_rect_tiles.x = x;
-        camera_rect_tiles.y = y
+    val camera = Camera(cameraInitPoint.x.toFloat(), cameraInitPoint.y.toFloat())
+
+    init {
+        generateVertices(gameMap)
+        generateIndexes(gameMap)
     }
 
-    fun getCameraCoords(): Point {
-        return Point(camera_rect_tiles.x, camera_rect_tiles.y)
-    }
-
-    private var scaleFactor: Double = 1.0;
-
-    fun scale(upDown: Double) {
-        if ((upDown < 0 && scaleFactor > 0.05) || (upDown > 0 && scaleFactor < 5)) {
-            scaleFactor += 0.05 * upDown
-        }
-        val dx = baseSize.getWidth() * scaleFactor
-        val dy = baseSize.getHeight() * scaleFactor
-        camera_rect_tiles.setSize(
-            dx.toInt(),
-            dy.toInt(),
-        )
-    }
-
-    fun generateVertices(map: GameMap): List<Vertex> {
+    private fun generateVertices(map: GameMap): List<Vertex> {
         vertices.clear()
         var tileArrayIndex = 0;
         for (blockY in 0 until map.size) {
@@ -93,7 +96,7 @@ class LocalPlayerView internal constructor(
         return vertices
     }
 
-    fun generateIndexes(map: GameMap): MutableList<Int> {
+    private fun generateIndexes(map: GameMap): MutableList<Int> {
         indexes.clear()
         var tileIndex = 0
         for (blockY in 0 until map.size) {
@@ -112,30 +115,6 @@ class LocalPlayerView internal constructor(
             }
         }
         return indexes
-    }
-
-    var isCameraMoving = false;
-
-    // Selection
-    val selectionRect = Rectangle()
-
-    var isCameraScaled = false
-        get() {
-            if (field) {
-                field = false
-                return true
-            }
-            return field
-        }
-
-    var cameraMovementStartingPoint: Point? = null
-
-    var cameraStartingPoint: Point? = null
-
-    var selectionStartingPoint: Point? = null
-
-    fun isSelecting(): Boolean {
-        return selectionStartingPoint != null
     }
 
 }

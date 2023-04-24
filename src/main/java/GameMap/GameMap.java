@@ -41,6 +41,10 @@ public class GameMap {
     int size;
     int blockSize;
 
+    public int getFullTileSize() {
+        return size * blockSize;
+    }
+
     public GameMap(int size, int blockSize) {
         this.blockSize = blockSize;
         this.size = size;
