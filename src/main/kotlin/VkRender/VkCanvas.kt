@@ -71,7 +71,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 indexBuffer = IndexBuffer(device, physicalDevice, commands, value)
             }
         }
-
     override fun initVK() {
 
         addComponentListener(this)

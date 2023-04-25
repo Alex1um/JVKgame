@@ -1,9 +1,11 @@
 package Game;
 
+import GameMap.Blocks.Block;
 import GameMap.Blocks.Structures.Temple;
 import GameMap.GameMap;
 import UI.VkFrame;
 import View.LocalPlayerView;
+import VkRender.Config;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -48,6 +50,18 @@ public final class Game {
                 selectionRect.setFrameFromDiagonal(selectionStartingPoint, e.getPoint());
                 g.setColor(new Color(0f, 1f, 0f, 0.4f));
                 g.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
+            }
+        }
+
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+            if (e != null) {
+                Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
+                System.out.println(block);
+                if (block != null)
+                    System.out.println(block.getStructure());
             }
         }
     }
@@ -117,8 +131,9 @@ public final class Game {
         gameMap = new GameMap(mapSize, blockSize);
         gameMap.generateRandomMap(System.currentTimeMillis());
         gameMap.getBlock(1, 1).placeStructure(new Temple());
-        localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0), 100);
+        localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));
         UI = new VkFrame("new game", localPlayerView);
+        localPlayerView.setUI(UI);
         MouseAdapter moveAdapter = new CameraMoveAdapter();
         MouseAdapter selectionAdapter = new CameraSelectionAdapter();
         UI.getCanvas().addMouseWheelListener(new CameraZoomAdapter());

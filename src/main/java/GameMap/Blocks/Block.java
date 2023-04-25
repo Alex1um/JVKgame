@@ -77,4 +77,8 @@ public class Block {
         return tiles[y][x];
     }
 
+    public Structure getStructure() {
+        return structure;
+    }
+
 }

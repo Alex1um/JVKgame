@@ -3,6 +3,7 @@ package GameMap;
 import GameMap.Blocks.Block;
 import GameMap.Blocks.GrassBlock;
 import GameMap.Tiles.Tile;
+import VkRender.Config;
 import org.joml.Random;
 
 public class GameMap {
@@ -23,7 +24,7 @@ public class GameMap {
         return blocks[blockY][blockX];
     }
 
-    public Block getTileBlock(int tileX, int tileY) {
+    public Block getBlockByTilePos(int tileX, int tileY) {
         return blocks[tileY / blockSize][tileX / blockSize];
     }
 
@@ -55,7 +56,7 @@ public class GameMap {
         Random r = new Random(seed);
         for (int blockY = 0; blockY < size; blockY++) {
             for (int blockX = 0; blockX < size; blockX++) {
-                blocks[blockY][blockX] = new GrassBlock(r, blockSize, 20, blockX, blockY);
+                blocks[blockY][blockX] = new GrassBlock(r, blockSize, Config.tileSize, blockX, blockY);
             }
         }
     }
