@@ -1,5 +1,6 @@
 package Game;
 
+import GameMap.Blocks.Structures.Temple;
 import GameMap.GameMap;
 import UI.VkFrame;
 import View.LocalPlayerView;
@@ -13,74 +14,43 @@ import java.util.List;
 
 public final class Game {
 
-//    public final class AreaMouseAdapter extends MouseAdapter {
-//
-//        @Override
-//        public void mousePressed(MouseEvent e) {
-//            super.mousePressed(e);
-//            if (e != null) {
-//                int button = e.getButton();
-//                if (button == MouseEvent.BUTTON1) {
-//                    localPlayerView.setSelectionStartingPoint(e.getPoint());
-//                    localPlayerView.getSelectionRect().setRect(e.getX(), e.getY(), 0, 0);
-//                } else if (button == MouseEvent.BUTTON2) {
-//                    localPlayerView.setCameraMovementStartingPoint(e.getPoint());
-//                    localPlayerView.setCameraStartingPoint(localPlayerView.getCameraCoords());
-//                    localPlayerView.setCameraMoving(true);
-//                }
-//            }
-//        }
-//        @Override
-//        public void mouseReleased(MouseEvent e) {
-//            if (e != null) {
-//                int button = e.getButton();
-//                if (button == MouseEvent.BUTTON1) {
-//                    localPlayerView.setSelectionStartingPoint(null);
-//                } else if (button == MouseEvent.BUTTON2) {
-//                    localPlayerView.setCameraMovementStartingPoint(null);
-//                    localPlayerView.setCameraStartingPoint(null);
-//                    localPlayerView.setCameraMoving(false);
-//                }
-//            }
-//        }
-//        @Override
-//        public void mouseClicked(MouseEvent e) {
-//            if (e != null) {
-//                Point mouse = e.getPoint();
-//                Rectangle camera = localPlayerView.getCamera_rect_tiles();
-//                Point relCords = new Point(mouse.x + camera.x, mouse.y + camera.y);
-//                System.out.println(String.valueOf(camera.x) + " " + String.valueOf(camera.y));
-//                // TODO add check
-//                System.out.print((relCords.x / gameMap.getSize() / 20));
-//                System.out.print(" ");
-//                System.out.println(relCords.x / gameMap.getSize() / 20);
-//                Block block = gameMap.getBlock(relCords.x / gameMap.getSize() / 20, relCords.y / gameMap.getSize() / 20);
-//                block.placeStructure(new Temple());
-//            }
-//        }
-//        @Override
-//        public void mouseDragged(MouseEvent e) {
-//            if (e != null) {
-//                if (localPlayerView.getSelectionStartingPoint() != null) {
-//                    localPlayerView.getSelectionRect().setFrameFromDiagonal(localPlayerView.getSelectionStartingPoint(), e.getPoint());
-//                }
-//                if (localPlayerView.isCameraMoving()) {
-//                    localPlayerView.setCameraCoords(
-//                            localPlayerView.getCameraStartingPoint().x - e.getX() + localPlayerView.getCameraStartingPoint().x,
-//                            localPlayerView.getCameraStartingPoint().y - e.getY() + localPlayerView.getCameraStartingPoint().y
-//                    );
-//                }
-//            }
-//        }
-//        @Override
-//        public void mouseWheelMoved(MouseWheelEvent e) {
-//            if (e != null) {
-//                localPlayerView.scale(e.getPreciseWheelRotation());
-//                localPlayerView.setCameraScaled(true);
-//            }
-//        }
-//    }
+    public final class CameraSelectionAdapter extends MouseAdapter {
 
+        private boolean isSelecting = false;
+        private Point selectionStartingPoint = null;
+        private final Rectangle selectionRect = new Rectangle();
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            super.mousePressed(e);
+            if (e != null && e.getButton() == MouseEvent.BUTTON1) {
+                isSelecting = true;
+                selectionStartingPoint = e.getPoint();
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            super.mouseReleased(e);
+            if (isSelecting && e != null) {
+                isSelecting = false;
+                UI.repaintCanvas();
+            }
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            super.mouseDragged(e);
+            if (isSelecting && e != null) {
+                Canvas canvas = UI.getCanvas();
+                Graphics g = canvas.getGraphics();
+                UI.repaintCanvas();
+                selectionRect.setFrameFromDiagonal(selectionStartingPoint, e.getPoint());
+                g.setColor(new Color(0f, 1f, 0f, 0.4f));
+                g.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
+            }
+        }
+    }
     public final class CameraMoveAdapter extends MouseAdapter {
 
         private boolean isMoving = false;
@@ -100,7 +70,6 @@ public final class Game {
             super.mouseReleased(e);
             if (isMoving && e != null && e.getButton() == MouseEvent.BUTTON2) {
                 isMoving = false;
-                moveStartPoint = null;
             }
         }
 
@@ -111,6 +80,7 @@ public final class Game {
                 Point delta = new Point(e.getPoint().x - moveStartPoint.x, e.getPoint().y - moveStartPoint.y);
                 localPlayerView.getCamera().move(delta.x, delta.y);
                 moveStartPoint = e.getPoint();
+                UI.repaintCanvas();
             }
         }
 
@@ -123,8 +93,10 @@ public final class Game {
             if (e != null) {
                 if (e.getPreciseWheelRotation() < 0) {
                     localPlayerView.getCamera().zoomIn();
+                    UI.repaintCanvas();
                 } else if (e.getPreciseWheelRotation() > 0) {
                     localPlayerView.getCamera().zoomOut();
+                    UI.repaintCanvas();
                 }
             }
         }
@@ -144,12 +116,16 @@ public final class Game {
     public Game(int mapSize, int blockSize) {
         gameMap = new GameMap(mapSize, blockSize);
         gameMap.generateRandomMap(System.currentTimeMillis());
+        gameMap.getBlock(1, 1).placeStructure(new Temple());
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0), 100);
         UI = new VkFrame("new game", localPlayerView);
         MouseAdapter moveAdapter = new CameraMoveAdapter();
+        MouseAdapter selectionAdapter = new CameraSelectionAdapter();
         UI.getCanvas().addMouseWheelListener(new CameraZoomAdapter());
         UI.getCanvas().addMouseListener(moveAdapter);
         UI.getCanvas().addMouseMotionListener(moveAdapter);
+        UI.getCanvas().addMouseListener(selectionAdapter);
+        UI.getCanvas().addMouseMotionListener(selectionAdapter);
         UI.start();
     }
 

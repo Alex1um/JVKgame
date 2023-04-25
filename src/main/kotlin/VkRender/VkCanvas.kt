@@ -73,20 +73,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         }
 
     override fun initVK() {
-        addMouseMotionListener(object : MouseAdapter() {
-            override fun mouseDragged(e: MouseEvent?) {
-                paint(graphics)
-                super.mouseDragged(e)
-            }
-        })
-        addMouseWheelListener(object: MouseWheelListener {
-            override fun mouseWheelMoved(p0: MouseWheelEvent?) {
-                paint(graphics)
-            }
-        })
-//        addMouseListener(mouseAdapter);
-//        addMouseMotionListener(mouseAdapter)
-//        addMouseWheelListener(mouseAdapter)
 
         addComponentListener(this)
         sfc = NativeSurface(surface, instance)
@@ -99,6 +85,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         textures = Images(
             "build/resources/main/images/Grass1.png",
             "build/resources/main/images/Structure1.png",
+            "build/resources/main/images/test.jpg"
         )
         descriptorSetLayout = DescriptorSetLayout(device, textures)
         pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout, Vertex.properties)
@@ -219,10 +206,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 }
                 currentFrame = (currentFrame + 1) % Config.MAX_FRAMES_IN_FLIGHT
 
-//                val selectionRect = controller.selectionRect
-//                if (controller.isSelecting) {
-//                    this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
-//                }
             }
         }
 //        println("fps: ${1e9 / time}")
@@ -233,8 +216,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         MemoryStack.stackPush().use { stack ->
             val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
                 .sType(VK13.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-//                .flags(0)
-//                .pInheritanceInfo(null)
 
             if (VK13.vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to begin recording command buffer!")
@@ -263,7 +244,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 }
                 .clearValueCount(1)
                 .pClearValues(clearColor)
-//                .pNext(MemoryUtil.NULL)
 
             VK13.vkCmdBeginRenderPass(currentCommandBuffer, renderPassInfo, VK13.VK_SUBPASS_CONTENTS_INLINE)
             VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
@@ -308,10 +288,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")
             }
-//            val selectionRect = localPlayerView.selectionRect
-//            if (localPlayerView.isSelecting()) {
-//                this.graphics.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
-//            }
         }
     }
 

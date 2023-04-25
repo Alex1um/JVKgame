@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 class Vertex(
     var pos: Vector2fc,
     var color: Vector4fc,
-    val texCoord: Vector2fc,
+    var texCoord: Vector2fc,
     var textureIndex: Int,
 ) : GPUObject() {
 

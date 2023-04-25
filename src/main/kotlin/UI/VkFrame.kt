@@ -33,4 +33,8 @@ class VkFrame(title: String, localPlayerView: LocalPlayerView) {
         frame.isVisible = true
     }
 
+    fun repaintCanvas() {
+        canvas.paint(canvas.graphics)
+    }
+
 }
