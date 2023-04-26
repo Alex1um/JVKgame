@@ -2,8 +2,8 @@ package VkRender
 
 import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.GPUObjects.Properties
+import VkRender.ShaderModule.ShaderModule
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
@@ -12,7 +12,8 @@ class GraphicsPipeline(
     private val ldevice: Device,
     renderPass: RenderPass,
     descriptorSetLayout: DescriptorSetLayout,
-    vertexProperties: Properties
+    vertexProperties: Properties,
+    vararg shaderModules: ShaderModule
 ) : Closeable {
 
     val graphicsPipeLine: Long
@@ -20,24 +21,30 @@ class GraphicsPipeline(
 
     init {
         with(Util) {
-            val vertShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/vert.spv")
-            val fragShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/frag.spv")
+//            val vertShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/vert.spv")
+//            val fragShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/frag.spv")
 
             MemoryStack.stackPush().use { stack ->
-                val shaderStagesInfo = VkPipelineShaderStageCreateInfo.calloc(2, stack)
+                val shaderStagesInfo = VkPipelineShaderStageCreateInfo.calloc(shaderModules.size, stack)
 
                 val main = stack.UTF8("main")
-
-                shaderStagesInfo[0]
-                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
-                    .stage(VK_SHADER_STAGE_VERTEX_BIT)
-                    .module(vertShaderModule.module)
-                    .pName(main)
-                shaderStagesInfo[1]
-                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
-                    .stage(VK_SHADER_STAGE_FRAGMENT_BIT)
-                    .module(fragShaderModule.module)
-                    .pName(main)
+                for ((i, module) in shaderModules.withIndex()) {
+                    shaderStagesInfo[i]
+                        .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+                        .stage(module.shaderType)
+                        .module(module.module)
+                        .pName(main)
+                }
+//                shaderStagesInfo[0]
+//                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+//                    .stage(VK_SHADER_STAGE_VERTEX_BIT)
+//                    .module(vertShaderModule.module)
+//                    .pName(main)
+//                shaderStagesInfo[1]
+//                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+//                    .stage(VK_SHADER_STAGE_FRAGMENT_BIT)
+//                    .module(fragShaderModule.module)
+//                    .pName(main)
 
                 val dynamicStates = stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR)
 
@@ -175,39 +182,13 @@ class GraphicsPipeline(
                 }
                 graphicsPipeLine = lp[0]
             }
-            fragShaderModule.close()
-            vertShaderModule.close()
-        }
-    }
 
-    inner class ShaderModule(private val ldevice: Device, data: ByteArray) : Closeable {
-        val module: Long
-
-
-        constructor(ldevice: Device, path: String) : this(ldevice, Util.readFile(path))
-
-        init {
-            MemoryStack.stackPush().use { stack ->
-                val pCode = MemoryUtil.memAlloc(data.size).put(data)
-                pCode.flip()
-                val createInfo = VkShaderModuleCreateInfo.malloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
-                    .pCode(pCode)
-                    .flags(0)
-                    .pNext(MemoryUtil.NULL)
-                val rt = vkCreateShaderModule(ldevice.device, createInfo, null, Util.lp)
-                if (rt != VK_SUCCESS) {
-                    throw IllegalStateException("failed to create shader module!")
-                }
-                MemoryUtil.memFree(pCode)
-                module = Util.lp[0]
+            for (module in shaderModules) {
+                module.close()
             }
+//            fragShaderModule.close()
+//            vertShaderModule.close()
         }
-
-        override fun close() {
-            vkDestroyShaderModule(ldevice.device, module, null)
-        }
-
     }
 
     override fun close() {

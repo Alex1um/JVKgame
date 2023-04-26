@@ -4,6 +4,8 @@ import View.LocalPlayerView
 import VkRender.Descriptors.DescriptorPool
 import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.Descriptors.DescriptorSets
+import VkRender.ShaderModule.FragmentShader
+import VkRender.ShaderModule.VertexShader
 import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
@@ -80,24 +82,26 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         device = Device(physicalDevice)
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
+        commands = CommandPool(device, physicalDevice)
 
         textures = Images(
             "build/resources/main/images/Grass1.png",
             "build/resources/main/images/Structure1.png",
-            "build/resources/main/images/test.jpg"
         )
         descriptorSetLayout = DescriptorSetLayout(device, textures)
-        pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout, Vertex.properties)
-        commands = CommandPool(device, physicalDevice)
+
+        pipeline = GraphicsPipeline(device, renderPass, descriptorSetLayout, Vertex.properties,
+            VertexShader(device, "build/resources/main/shaders/vert.spv"),
+            FragmentShader(device, "build/resources/main/shaders/frag.spv")
+            )
 
 //        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
         textures.init(device, physicalDevice, commands)
         sampler = Sampler(device, physicalDevice)
 
         vertexBuffer = VertexBuffer(device, physicalDevice, commands, vertices.size, Vertex.properties)
-
         indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
-        updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 4L)
+        updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
         descriptorPool = DescriptorPool(device)
         descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, sampler, textures)
 
@@ -116,7 +120,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 localPlayerView.camera.offsetX,
                 localPlayerView.camera.offsetY,
                 localPlayerView.camera.scale,
-                800f
             )
         }
     }
@@ -160,7 +163,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                     localPlayerView.camera.offsetX,
                     localPlayerView.camera.offsetY,
                     localPlayerView.camera.scale,
-                    800f
                 )
 //                }
                 
