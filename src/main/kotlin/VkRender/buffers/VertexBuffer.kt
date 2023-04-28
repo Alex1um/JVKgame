@@ -7,7 +7,7 @@ import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 import java.nio.ByteBuffer
 
-class VertexBuffer(val ldevice: Device, physicalDevice: PhysicalDevice, commands: CommandPool,
+class VertexBuffer(val ldevice: Device, physicalDevice: PhysicalDevice,
                    private var len: Int, val vertexProps: Properties) : Closeable {
 
     val buffer: Buffer

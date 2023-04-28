@@ -6,6 +6,8 @@ import GameMap.Tiles.Tile;
 import VkRender.Config;
 import org.joml.Random;
 
+import java.awt.*;
+
 public class GameMap {
 
     public int getSize() {
@@ -24,8 +26,16 @@ public class GameMap {
         return blocks[blockY][blockX];
     }
 
+    public Block getBlock(Point pos) {
+        return blocks[pos.y][pos.x];
+    }
+
     public Block getBlockByTilePos(int tileX, int tileY) {
         return blocks[tileY / blockSize][tileX / blockSize];
+    }
+
+    public Point getBlockPosByTilePos(int tileX, int tileY) {
+        return new Point(tileX / blockSize, tileY / blockSize);
     }
 
     public Tile getTile(int tileX, int tileY) {

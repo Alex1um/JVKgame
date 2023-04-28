@@ -8,4 +8,7 @@ public class Temple extends Structure {
     public Temple() {
         super(1);
     }
+
+
+
 }

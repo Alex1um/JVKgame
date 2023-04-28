@@ -147,4 +147,33 @@ class LocalPlayerView internal constructor(
         }
     }
 
+    fun getTilePositionByClick(clickPos: Point): Point? {
+        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
+        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
+        val mousePosX: Float = (clickPos.x
+            .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
+        val mousePosY: Float = (clickPos.y
+            .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
+        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
+            return Point(mousePosX.toInt(), mousePosY.toInt());
+        } else {
+            return null
+        }
+    }
+
+    fun getBlockPositionByClick(clickPos: Point): Point? {
+        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
+        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
+        val mousePosX: Float = (clickPos.x
+            .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
+        val mousePosY: Float = (clickPos.y
+            .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
+        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
+            return gameMap.getBlockPosByTilePos(mousePosX.toInt(), mousePosY.toInt());
+        } else {
+            return null
+        }
+    }
+
+
 }

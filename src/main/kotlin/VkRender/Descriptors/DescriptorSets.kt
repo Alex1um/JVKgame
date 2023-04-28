@@ -4,7 +4,6 @@ import VkRender.Config
 import VkRender.Device
 import VkRender.Textures.Images
 import VkRender.Textures.Sampler
-import VkRender.Textures.TextureImage
 import VkRender.buffers.UpdatingUniformBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -41,7 +40,7 @@ class DescriptorSets(val ldevice: Device, descriptorPool: DescriptorPool, descri
             // Configure
             val bufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
                 .offset(0)
-                .range(ssb.size)
+                .range(ssb.el_size)
 
             val imageInfo = VkDescriptorImageInfo.calloc(textures.size, stack)
             for ((i: Int, texture) in textures.textures.withIndex()) {

@@ -1,6 +1,8 @@
 package Game;
 
+import Game.Actions.Action;
 import GameMap.Blocks.Block;
+import GameMap.Blocks.Structures.House;
 import GameMap.Blocks.Structures.Temple;
 import GameMap.GameMap;
 import UI.VkFrame;
@@ -13,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public final class Game {
 
@@ -36,7 +40,7 @@ public final class Game {
             super.mouseReleased(e);
             if (isSelecting && e != null) {
                 isSelecting = false;
-                UI.repaintCanvas();
+//                UI.repaintCanvas();
             }
         }
 
@@ -46,10 +50,11 @@ public final class Game {
             if (isSelecting && e != null) {
                 Canvas canvas = UI.getCanvas();
                 Graphics g = canvas.getGraphics();
-                UI.repaintCanvas();
+//                UI.repaintCanvas();
                 selectionRect.setFrameFromDiagonal(selectionStartingPoint, e.getPoint());
-                g.setColor(new Color(0f, 1f, 0f, 0.4f));
-                g.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
+//                g.setColor(new Color(0f, 1f, 0f, 0.4f));
+//                g.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
+//                UI.getCanvas().update(UI.getFrame().getGraphics());
             }
         }
 
@@ -59,9 +64,16 @@ public final class Game {
             super.mouseClicked(e);
             if (e != null) {
                 Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
-                System.out.println(block);
-                if (block != null)
-                    System.out.println(block.getStructure());
+
+//                System.out.println(block);
+                if (block != null) {
+//                    System.out.println(block.getStructure());
+                    try {
+                        new House().build(gameMap, actions, localPlayerView.getBlockPositionByClick(e.getPoint()));
+                    } catch (Throwable err) {
+                        System.out.println("Cannot build house: " + err);
+                    }
+                }
             }
         }
     }
@@ -94,7 +106,7 @@ public final class Game {
                 Point delta = new Point(e.getPoint().x - moveStartPoint.x, e.getPoint().y - moveStartPoint.y);
                 localPlayerView.getCamera().move(delta.x, delta.y);
                 moveStartPoint = e.getPoint();
-                UI.repaintCanvas();
+//                UI.repaintCanvas();
             }
         }
 
@@ -107,10 +119,10 @@ public final class Game {
             if (e != null) {
                 if (e.getPreciseWheelRotation() < 0) {
                     localPlayerView.getCamera().zoomIn();
-                    UI.repaintCanvas();
+//                    UI.repaintCanvas();
                 } else if (e.getPreciseWheelRotation() > 0) {
                     localPlayerView.getCamera().zoomOut();
-                    UI.repaintCanvas();
+//                    UI.repaintCanvas();
                 }
             }
         }
@@ -125,12 +137,17 @@ public final class Game {
 
     private UI.VkFrame UI;
     private final GameMap gameMap;
-    private final List<Object> actions = new ArrayList<>();
+    private ArrayList<Action> actions = new ArrayList<>();
 
     public Game(int mapSize, int blockSize) {
         gameMap = new GameMap(mapSize, blockSize);
         gameMap.generateRandomMap(System.currentTimeMillis());
-        gameMap.getBlock(1, 1).placeStructure(new Temple());
+//        gameMap.getBlock(1, 1).placeStructure(new Temple());
+        Temple temple = new Temple();
+        temple.build(gameMap, actions, new Point(1, 1));
+        House house = new House();
+        house.build(gameMap, actions, new Point(0, 0));
+
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));
         UI = new VkFrame("new game", localPlayerView);
         localPlayerView.setUI(UI);
@@ -142,7 +159,34 @@ public final class Game {
         UI.getCanvas().addMouseListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
         UI.start();
+        try {
+            TimeUnit.SECONDS.sleep(1);
+            run();
+        } catch (Throwable t) {
+            System.out.println("Error: " + t.getMessage());
+        }
     }
 
+    void run() throws InterruptedException {
 
+        ArrayList<Action> newActions = new ArrayList<Action>();
+
+        while(true) {
+            newActions.clear();
+            synchronized (actions) {
+                for (Action action : actions) {
+                    try {
+                        action.execute(gameMap, newActions);
+                    } catch (Throwable e) {
+                        System.out.println("Error while doing action " + action + ": " + e);
+                    }
+                }
+            }
+            actions.clear();
+            actions.addAll(newActions);
+//            UI.getFrame().update(UI.getFrame().getGraphics());
+            UI.repaintCanvas();
+        }
+
+    }
 }

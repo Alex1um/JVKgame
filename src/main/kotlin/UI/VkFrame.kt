@@ -9,7 +9,7 @@ import java.awt.Dimension
 
 class VkFrame(title: String, localPlayerView: LocalPlayerView) {
 
-    private val frame: JFrame
+    public val frame: JFrame
     private val vkInstance: Instance
     val canvas: VkCanvas
 

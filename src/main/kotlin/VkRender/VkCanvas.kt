@@ -83,10 +83,15 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         renderPass = RenderPass(device, physicalDevice)
         swapChain = SwapChain(device, physicalDevice, sfc, renderPass, size.width, size.height)
         commands = CommandPool(device, physicalDevice)
+        descriptorPool = DescriptorPool(device)
 
         textures = Images(
             "build/resources/main/images/Grass1.png",
             "build/resources/main/images/Structure1.png",
+            "build/resources/main/images/house.png",
+            "build/resources/main/images/house2.png",
+            "build/resources/main/images/temple2.png",
+            "build/resources/main/images/temple-destroyed.png",
         )
         descriptorSetLayout = DescriptorSetLayout(device, textures)
 
@@ -95,14 +100,12 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             FragmentShader(device, "build/resources/main/shaders/frag.spv")
             )
 
-//        vertexBuffer = VertexBuffer(device, physicalDevice, vertices, Vertex.SIZEOF)
         textures.init(device, physicalDevice, commands)
         sampler = Sampler(device, physicalDevice)
-
-        vertexBuffer = VertexBuffer(device, physicalDevice, commands, vertices.size, Vertex.properties)
-        indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
         updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
-        descriptorPool = DescriptorPool(device)
+
+        vertexBuffer = VertexBuffer(device, physicalDevice, vertices.size, Vertex.properties)
+        indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
         descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, sampler, textures)
 
         MemoryStack.stackPush().use { stack ->
@@ -112,8 +115,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
             renderFinishedSemaphore = Semaphores(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
         }
-//        vertices = controller.localPlayerView.vertices.toTypedArray()
-//        indexes = controller.localPlayerView.indexes.toTypedArray()
+
         for (frame in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
             updatingUniformBuffer.update(
                 frame,
@@ -157,15 +159,13 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
                 VK13.vkResetCommandBuffer(commands.commandBuffer[currentFrame]!!, 0)
 
-//                if (localPlayerView.isCameraMoving || localPlayerView.isCameraScaled) {
                 updatingUniformBuffer.update(
                     currentFrame,
                     localPlayerView.camera.offsetX,
                     localPlayerView.camera.offsetY,
                     localPlayerView.camera.scale,
                 )
-//                }
-                
+
                 vertexBuffer.update(vertices)
 
                 record(currentFrame, imageIndex)
@@ -247,7 +247,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 .pClearValues(clearColor)
 
             VK13.vkCmdBeginRenderPass(currentCommandBuffer, renderPassInfo, VK13.VK_SUBPASS_CONTENTS_INLINE)
-            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
 
             val viewport = VkViewport.calloc(1, stack)
                 .x(0.0f)
@@ -256,8 +255,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 .height(height.toFloat())
                 .minDepth(0.0f)
                 .maxDepth(1.0f)
-
-            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
 
             val scissor = VkRect2D.calloc(1, stack)
                 .offset {
@@ -269,6 +266,9 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                         .height(height)
                 }
 
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
             VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissor)
 
             val vertexBufferptr = stack.longs(vertexBuffer.buffer.vertexBuffer)
@@ -278,12 +278,12 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
             val currentDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
-
-//            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
-//            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
             VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
 
             VK13.vkCmdDrawIndexed(currentCommandBuffer, indexes.size, 1, 0, 0, 0)
+
+//            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
+//            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
 
             VK13.vkCmdEndRenderPass(currentCommandBuffer)
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
