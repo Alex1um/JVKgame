@@ -25,6 +25,7 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.awt.AWTVKCanvas
 import org.lwjgl.vulkan.awt.VKData
+import java.awt.Graphics
 import java.awt.event.*
 import java.io.Closeable
 import kotlin.system.measureNanoTime
@@ -148,7 +149,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     }
 
-    @Synchronized
     override fun paintVK() {
 
         val time = measureNanoTime {
@@ -350,6 +350,10 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
     }
 
     override fun componentHidden(p0: ComponentEvent?) {
+    }
+
+    override fun update(g: Graphics?) {
+        paint(g)
     }
 
     override fun close() {

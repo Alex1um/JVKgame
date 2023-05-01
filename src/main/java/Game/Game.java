@@ -154,7 +154,10 @@ public final class Game {
         house.build(gameMap, actions, new Point(0, 0));
 
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));
-        UI = new VkFrame("new game", localPlayerView);
+        UI = new VkFrame("new game", localPlayerView, 60, () -> {
+            run();
+            return null;
+        });
         localPlayerView.setUI(UI);
         MouseAdapter moveAdapter = new CameraMoveAdapter();
         MouseAdapter selectionAdapter = new CameraSelectionAdapter();
@@ -165,34 +168,32 @@ public final class Game {
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(new BlockHightlightAdapter());
         UI.start();
-        try {
-            TimeUnit.SECONDS.sleep(1);
-            run();
-        } catch (Throwable t) {
-            System.out.println("Error: " + t.getMessage());
-        }
+//        try {
+//            TimeUnit.SECONDS.sleep(1);
+//            run();
+//        } catch (Throwable t) {
+//            System.out.println("Error: " + t.getMessage());
+//        }
     }
 
-    void run() throws InterruptedException {
+    void run() {
 
         ArrayList<Action> newActions = new ArrayList<Action>();
 
-        while(true) {
-            newActions.clear();
-            synchronized (actions) {
-                for (Action action : actions) {
-                    try {
-                        action.execute(gameMap, newActions);
-                    } catch (Throwable e) {
-                        System.out.println("Error while doing action " + action + ": " + e);
-                    }
+        newActions.clear();
+        synchronized (actions) {
+            for (Action action : actions) {
+                try {
+                    action.execute(gameMap, newActions);
+                } catch (Throwable e) {
+                    System.out.println("Error while doing action " + action + ": " + e);
                 }
             }
-            actions.clear();
-            actions.addAll(newActions);
-//            UI.getFrame().update(UI.getFrame().getGraphics());
-            UI.repaintCanvas();
         }
+        actions.clear();
+        actions.addAll(newActions);
+
+        UI.repaintCanvas();
 
     }
 }
