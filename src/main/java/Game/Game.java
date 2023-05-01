@@ -40,6 +40,7 @@ public final class Game {
             super.mouseReleased(e);
             if (isSelecting && e != null) {
                 isSelecting = false;
+                localPlayerView.getVkUI().select(e.getPoint(), e.getPoint());
 //                UI.repaintCanvas();
             }
         }
@@ -48,13 +49,8 @@ public final class Game {
         public void mouseDragged(MouseEvent e) {
             super.mouseDragged(e);
             if (isSelecting && e != null) {
-                Canvas canvas = UI.getCanvas();
-                Graphics g = canvas.getGraphics();
-//                UI.repaintCanvas();
                 selectionRect.setFrameFromDiagonal(selectionStartingPoint, e.getPoint());
-//                g.setColor(new Color(0f, 1f, 0f, 0.4f));
-//                g.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
-//                UI.getCanvas().update(UI.getFrame().getGraphics());
+                localPlayerView.getVkUI().select(selectionStartingPoint, e.getPoint());
             }
         }
 
@@ -128,6 +124,15 @@ public final class Game {
         }
     }
 
+    public final class BlockHightlightAdapter extends MouseAdapter {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            if (e != null) {
+                Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
+                localPlayerView.getVkUI().highlightBlock(block);
+            }
+        }
+    }
     // View
     public LocalPlayerView getLocalPlayerView() {
         return localPlayerView;
@@ -158,6 +163,7 @@ public final class Game {
         UI.getCanvas().addMouseMotionListener(moveAdapter);
         UI.getCanvas().addMouseListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
+        UI.getCanvas().addMouseMotionListener(new BlockHightlightAdapter());
         UI.start();
         try {
             TimeUnit.SECONDS.sleep(1);

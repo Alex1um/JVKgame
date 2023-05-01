@@ -8,34 +8,65 @@ import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding
 import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo
 import java.io.Closeable
+import java.nio.LongBuffer
 
-class DescriptorSetLayout(val ldevice: Device, textures: Images) : Closeable {
+class DescriptorSetLayout(val ldevice: Device) {
 
-    val descriptorSetLayout: Long
+    val descriptorSetLayoutBindings: MutableList<Binding> = mutableListOf()
 
-    init {
+    open inner class Binding(val type: Int, val descriptorCount: Int, val stageFlags: Int, val pImmutableSamples: LongBuffer?)
+    inner class UniformsBinding( descriptorCount: Int,  stageFlags: Int,  pImmutableSamples: LongBuffer?) :
+        Binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount, stageFlags, pImmutableSamples)
+    inner class SamplersBinding( descriptorCount: Int,  stageFlags: Int,  pImmutableSamples: LongBuffer?) :
+        Binding(VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount, stageFlags, pImmutableSamples)
+    inner class SampledImagesBinding( descriptorCount: Int,  stageFlags: Int,  pImmutableSamples: LongBuffer?) :
+        Binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount, stageFlags, pImmutableSamples)
+
+    fun addUniforms(count: Int = 1, stageFlags: Int = VK_SHADER_STAGE_VERTEX_BIT, pImmutableSamples: LongBuffer? = null): DescriptorSetLayout {
+        descriptorSetLayoutBindings.add(
+            UniformsBinding(count, stageFlags, pImmutableSamples)
+        )
+        return this
+    }
+
+    fun addSampledTextures(
+        textures: Images,
+        stageFlags: Int = VK_SHADER_STAGE_VERTEX_BIT,
+        pImmutableSamples: LongBuffer? = null,
+    ): DescriptorSetLayout {
+        descriptorSetLayoutBindings.add(
+            SampledImagesBinding(textures.size, stageFlags, pImmutableSamples)
+        )
+        return this
+    }
+
+    fun addSamplers(
+        count: Int = 1,
+        stageFlags: Int = VK_SHADER_STAGE_VERTEX_BIT,
+        pImmutableSamples: LongBuffer? = null,
+    ): DescriptorSetLayout {
+        descriptorSetLayoutBindings.add(
+            SamplersBinding(count, stageFlags, pImmutableSamples)
+        )
+        return this
+    }
+
+    fun done(): FilledDescriptorSetLayout {
+
+        val descriptorSetLayout: Long
 
         MemoryStack.stackPush().use { stack ->
 
-            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(3, stack)
-            ssLayoutBinding[0]
-                .binding(0)
-                .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-                .descriptorCount(1)
-                .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
-                .pImmutableSamplers(null)
-            ssLayoutBinding[1]
-                .binding(1)
-                .descriptorCount(1)
-                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLER)
-                .pImmutableSamplers(null)
-                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
-            ssLayoutBinding[2]
-                .binding(2)
-                .descriptorCount(textures.size)
-                .descriptorType(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
-                .pImmutableSamplers(null)
-                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+            val ssLayoutBinding = VkDescriptorSetLayoutBinding.calloc(descriptorSetLayoutBindings.size, stack)
+            for ((i, binding) in descriptorSetLayoutBindings.withIndex()) {
+                ssLayoutBinding[i]
+                    .binding(i)
+                    .descriptorCount(binding.descriptorCount)
+                    .pImmutableSamplers(binding.pImmutableSamples)
+                    .stageFlags(binding.stageFlags)
+                    .descriptorType(binding.type)
+
+            }
 
             val ssDescriptorSetLayoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
@@ -58,10 +89,8 @@ class DescriptorSetLayout(val ldevice: Device, textures: Images) : Closeable {
 //            .sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
 //            .pSetLayouts(pDescriptorSetLayouts)
         }
-    }
 
-    override fun close() {
-        vkDestroyDescriptorSetLayout(ldevice.device, descriptorSetLayout, null)
+        return FilledDescriptorSetLayout(ldevice, descriptorSetLayout, descriptorSetLayoutBindings)
     }
 
 }

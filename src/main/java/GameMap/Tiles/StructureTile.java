@@ -1,7 +1,7 @@
 package GameMap.Tiles;
 
 import GameMap.Blocks.Structures.Structure;
-import VkRender.Vertex;
+import VkRender.GPUObjects.GameMapVertex;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -27,7 +27,7 @@ public class StructureTile extends Tile {
             for (int x = 0; x < 2; x++){
                 Vector4f tileColor = new Vector4f();
                 getVertexColor(y * 2 + x, tileColor);
-                vertexes[y][x] = new Vertex(
+                vertexes[y][x] = new GameMapVertex(
                         new Vector2f(
                                 0f,
                                 0f
@@ -37,7 +37,8 @@ public class StructureTile extends Tile {
                                 (float)(tileInBlockX * tileSizePX + x * tileSizePX) / (float)blockSize,
                                 (float)(tileInBlockY * tileSizePX + y * tileSizePX) / (float)blockSize
                         ),
-                        textureIndex
+                        textureIndex,
+                        0
                 );
             }
         }

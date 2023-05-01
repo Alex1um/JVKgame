@@ -4,8 +4,7 @@ import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
 import GameMap.Tiles.Tile;
-import VkRender.Vertex;
-import org.jetbrains.annotations.Nullable;
+import VkRender.GPUObjects.GameMapVertex;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
@@ -42,7 +41,7 @@ public abstract class Structure {
                     float dy = 1f / block.getSize();
                     for (int vy = 0; vy < 2; vy++) {
                         for (int vx = 0; vx < 2; vx++) {
-                            Vertex vertex = tile.getVertex(vy, vx);
+                            GameMapVertex vertex = tile.getVertex(vy, vx);
                             vertex.setTextureIndex(textureIndex);
                             vertex.setColor(zero);
                             vertex.setTexCoord(new Vector2f(

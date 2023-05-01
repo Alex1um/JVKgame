@@ -1,6 +1,7 @@
 package VkRender.buffers
 
 import VkRender.*
+import VkRender.GPUObjects.GameMapVertex
 import VkRender.Textures.Image
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
@@ -59,9 +60,9 @@ class Buffer(
         }
     }
 
-    fun fillVertices(vertixes: List<Vertex>) {
+    fun fillVertices(vertixes: List<GameMapVertex>) {
 
-        fun memcpy(buffer: ByteBuffer, array: List<Vertex>) {
+        fun memcpy(buffer: ByteBuffer, array: List<GameMapVertex>) {
 
             for (v in array) {
                 v.put(buffer)
@@ -119,10 +120,10 @@ class Buffer(
     constructor(
         ldevide: Device,
         physicalDevice: PhysicalDevice,
-        vertixes: List<Vertex>) : this(
+        vertixes: List<GameMapVertex>) : this(
         ldevide,
         physicalDevice,
-        (vertixes.size * Vertex.properties.SIZEOF).toLong(),
+        (vertixes.size * GameMapVertex.properties.SIZEOF).toLong(),
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
             this.fillVertices(vertixes)

@@ -5,15 +5,11 @@ import Game.Actions.DelayedAction;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
 import GameMap.Tiles.Tile;
-import VkRender.Vertex;
-import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2f;
-import org.joml.Vector4f;
+import VkRender.GPUObjects.GameMapVertex;
 
 import java.awt.*;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.List;
 
 public abstract class BuildableStructure extends Structure {
 
@@ -47,7 +43,7 @@ public abstract class BuildableStructure extends Structure {
                 Tile tile = block.getTile(tileX, tileY);
                 for (int vy = 0; vy < 2; vy++) {
                     for (int vx = 0; vx < 2; vx++) {
-                        Vertex vertex = tile.getVertex(vy, vx);
+                        GameMapVertex vertex = tile.getVertex(vy, vx);
                         vertex.setTextureIndex(textureIndexBuilt);
                     }
                 }

@@ -3,7 +3,7 @@ package VkRender.GPUObjects
 import org.joml.*
 import org.lwjgl.vulkan.VK13
 
-open class GPUObjectProperties(vararg structure: Any) {
+open class GPUObjectAutoProperties(vararg structure: Any) {
 
     val properties: Properties
 //    val SIZEOF: Int,

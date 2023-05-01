@@ -1,8 +1,12 @@
-package VkRender
+package VkRender.Pipelines
 
 import VkRender.Descriptors.DescriptorSetLayout
+import VkRender.Descriptors.FilledDescriptorSetLayout
+import VkRender.Device
 import VkRender.GPUObjects.Properties
+import VkRender.RenderPass
 import VkRender.ShaderModule.ShaderModule
+import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK13.*
@@ -11,8 +15,8 @@ import java.io.Closeable
 class GraphicsPipeline(
     private val ldevice: Device,
     renderPass: RenderPass,
-    descriptorSetLayout: DescriptorSetLayout,
     vertexProperties: Properties,
+    descriptorSetLayout: FilledDescriptorSetLayout? = null,
     vararg shaderModules: ShaderModule
 ) : Closeable {
 
@@ -21,8 +25,6 @@ class GraphicsPipeline(
 
     init {
         with(Util) {
-//            val vertShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/vert.spv")
-//            val fragShaderModule = ShaderModule(ldevice, "build/resources/main/shaders/frag.spv")
 
             MemoryStack.stackPush().use { stack ->
                 val shaderStagesInfo = VkPipelineShaderStageCreateInfo.calloc(shaderModules.size, stack)
@@ -35,16 +37,6 @@ class GraphicsPipeline(
                         .module(module.module)
                         .pName(main)
                 }
-//                shaderStagesInfo[0]
-//                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
-//                    .stage(VK_SHADER_STAGE_VERTEX_BIT)
-//                    .module(vertShaderModule.module)
-//                    .pName(main)
-//                shaderStagesInfo[1]
-//                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
-//                    .stage(VK_SHADER_STAGE_FRAGMENT_BIT)
-//                    .module(fragShaderModule.module)
-//                    .pName(main)
 
                 val dynamicStates = stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR)
 
@@ -115,21 +107,13 @@ class GraphicsPipeline(
 
                 val colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack)
                     .colorWriteMask(VK_COLOR_COMPONENT_A_BIT or VK_COLOR_COMPONENT_B_BIT or VK_COLOR_COMPONENT_G_BIT or VK_COLOR_COMPONENT_R_BIT)
-//                .blendEnable(true)
-//                .srcColorBlendFactor(VK_BLEND_FACTOR_ONE)
-//                .dstColorBlendFactor(VK_BLEND_FACTOR_ONE)
-//                .colorBlendOp(VK_BLEND_OP_SUBTRACT)
-//                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
-//                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
-//                .alphaBlendOp(VK_BLEND_OP_ADD)
-//
-                    .blendEnable(false)
-//                    .srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA)
-//                    .dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
-//                    .colorBlendOp(VK_BLEND_OP_ADD)
-//                    .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
-//                    .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
-//                    .alphaBlendOp(VK_BLEND_OP_ADD)
+                .blendEnable(true)
+                .srcColorBlendFactor(VK_BLEND_FACTOR_ONE)
+                .dstColorBlendFactor(VK_BLEND_FACTOR_ONE)
+                .colorBlendOp(VK_BLEND_OP_ADD)
+                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
+                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .alphaBlendOp(VK_BLEND_OP_ADD)
 
                 val colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
@@ -140,18 +124,6 @@ class GraphicsPipeline(
                     .blendConstants(1, 0.5f)
                     .blendConstants(2, 0.7f)
                     .blendConstants(3, 1.0f)
-
-                val layouts = stack.longs(descriptorSetLayout.descriptorSetLayout)
-
-                val pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-                    .pSetLayouts(layouts)
-                    .pPushConstantRanges(null)
-
-                if (vkCreatePipelineLayout(ldevice.device, pipelineLayoutInfo, null, lp) != VK_SUCCESS) {
-                    throw IllegalStateException("failed to create pipeline layout!")
-                }
-                layout = lp[0]
 
                 val pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack)
                     .sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
@@ -164,11 +136,28 @@ class GraphicsPipeline(
                     .pDepthStencilState(null)
                     .pColorBlendState(colorBlending)
                     .pDynamicState(dynamicState)
-                    .layout(layout)
                     .renderPass(renderPass.renderPass)
                     .subpass(0)
                     .basePipelineHandle(VK_NULL_HANDLE)
                     .basePipelineIndex(-1)
+
+                val layouts = if (descriptorSetLayout != null) {
+                    stack.longs(descriptorSetLayout.descriptorSetLayout)
+                } else {
+                    null
+                }
+
+                val pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack)
+                    .sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
+                    .pSetLayouts(layouts)
+                    .pPushConstantRanges(null)
+
+                if (vkCreatePipelineLayout(ldevice.device, pipelineLayoutInfo, null, lp) != VK_SUCCESS) {
+                    throw IllegalStateException("failed to create pipeline layout!")
+                }
+                layout = lp[0]
+                pipelineInfo
+                    .layout(layout)
 
                 if (vkCreateGraphicsPipelines(
                         ldevice.device,

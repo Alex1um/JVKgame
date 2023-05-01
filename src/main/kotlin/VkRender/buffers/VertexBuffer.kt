@@ -1,6 +1,8 @@
 package VkRender.buffers
 
 import VkRender.*
+import VkRender.GPUObjects.GPUObject
+import VkRender.GPUObjects.GameMapVertex
 import VkRender.GPUObjects.Properties
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
@@ -34,7 +36,7 @@ class VertexBuffer(val ldevice: Device, physicalDevice: PhysicalDevice,
         vkMapMemory(ldevice.device, buffer.vertexBufferMemory, 0, size.toLong(), 0, mapped)
     }
 
-    fun update(arr: List<Vertex>) {
+    fun update(arr: List<GPUObject>) {
         val byteBuffer = getByteBuffer()
         for (e in arr) {
             e.put(byteBuffer)

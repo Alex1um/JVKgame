@@ -1,13 +1,8 @@
 package GameMap.Blocks;
 
 import GameMap.Blocks.Structures.Structure;
-import GameMap.Tiles.StructureTile;
 import GameMap.Tiles.Tile;
-import VkRender.Vertex;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector2f;
-import org.joml.Vector4f;
 
 public class Block {
 

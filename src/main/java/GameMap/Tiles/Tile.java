@@ -1,6 +1,6 @@
 package GameMap.Tiles;
 
-import VkRender.Vertex;
+import VkRender.GPUObjects.GameMapVertex;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import GameMap.Units.Unit;
@@ -14,11 +14,11 @@ public abstract class Tile {
         this.textureIndex = textureIndex;
     }
 
-    public Vertex getVertex(int x, int y) {
+    public GameMapVertex getVertex(int x, int y) {
         return vertexes[y][x];
     }
 
-     Vertex[][] vertexes = new Vertex[2][2];
+     GameMapVertex[][] vertexes = new GameMapVertex[2][2];
 
     public int getTextureIndex() {
         return textureIndex;
@@ -48,14 +48,15 @@ public abstract class Tile {
             for (int x = 0; x < 2; x++){
                 Vector4f tileColor = new Vector4f();
                 getVertexColor(y * 2 + x, tileColor);
-                vertexes[y][x] = new Vertex(
+                vertexes[y][x] = new GameMapVertex(
                         new Vector2f(
                                 (tileRelativeBlockX * tileSizePX + x * tileSizePX),
                                 (tileRelativeBlockY * tileSizePX + y * tileSizePX)
                                 ),
                         tileColor,
                         new Vector2f(x, y),
-                        textureIndex
+                        textureIndex,
+                        0
                 );
             }
         }

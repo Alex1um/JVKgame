@@ -3,16 +3,16 @@ package VkRender.buffers
 import VkRender.CommandPool
 import VkRender.Device
 import VkRender.PhysicalDevice
-import VkRender.Vertex
+import VkRender.GPUObjects.GameMapVertex
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable
 
-class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: List<Vertex>, commands: CommandPool) : Closeable {
+class VertexStagingBuffer(ldevice: Device, physicalDevice: PhysicalDevice, vertices: List<GameMapVertex>, commands: CommandPool) : Closeable {
 
     val buffer: Buffer
 
     init {
-        val bufferSize = (vertices.size * Vertex.properties.SIZEOF).toLong()
+        val bufferSize = (vertices.size * GameMapVertex.properties.SIZEOF).toLong()
         val stagingBuffer = Buffer(
             ldevice,
             physicalDevice,

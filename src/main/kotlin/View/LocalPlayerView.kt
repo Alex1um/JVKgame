@@ -5,7 +5,7 @@ import GameMap.GameMap
 import GameMap.Tiles.Tile
 import UI.VkFrame
 import VkRender.Config
-import VkRender.Vertex
+import VkRender.GPUObjects.GameMapVertex
 import java.awt.Point
 
 class LocalPlayerView internal constructor(
@@ -14,6 +14,8 @@ class LocalPlayerView internal constructor(
 ) {
 
     var UI: VkFrame? = null;
+
+    var vkUI = VkUI()
     companion object Consts {
         private const val MAX_SCALE = 0.05f
         private const val MIN_SCALE = 0.005f
@@ -52,7 +54,7 @@ class LocalPlayerView internal constructor(
     val indexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
         get;
 
-    val vertices: MutableList<Vertex> = mutableListOf();
+    val vertices: MutableList<GameMapVertex> = mutableListOf();
 
     val camera = Camera(cameraInitPoint.x.toFloat(), cameraInitPoint.y.toFloat())
 
@@ -61,7 +63,7 @@ class LocalPlayerView internal constructor(
         generateIndexes(gameMap)
     }
 
-    private fun generateVertices(map: GameMap): List<Vertex> {
+    private fun generateVertices(map: GameMap): List<GameMapVertex> {
         vertices.clear()
         var tileArrayIndex = 0;
         for (blockY in 0 until map.size) {
