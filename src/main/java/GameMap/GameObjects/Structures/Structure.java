@@ -4,6 +4,7 @@ import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
 import GameMap.GameObjects.GameObject;
+import GameMap.Tiles.Tile;
 import VkRender.GPUObjects.GameMapVertex;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -32,7 +33,20 @@ public abstract class Structure extends GameObject {
     protected void onBuilt(GameMap gameMap, ArrayList<Action> actions) {
         Block block = gameMap.getBlock(blockPosition);
 
-        if (block.getStructure() == null) {
+        boolean canBuild = block.getStructure() == null;
+        if (canBuild) {
+            searchLoop:
+            for (Tile[] TileRow : block.getTiles()) {
+                for (Tile tile : TileRow) {
+                    if (tile.getUnit() != null) {
+                        canBuild = false;
+                        break searchLoop;
+                    }
+                }
+            }
+        }
+
+        if (canBuild) {
             block.setStructure(this);
             Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);
             for (int vy = 0; vy < 2; vy++) {

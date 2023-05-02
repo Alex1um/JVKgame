@@ -1,18 +1,21 @@
 package GameMap.GameObjects.Units;
 
 import Game.Actions.Action;
+import GameMap.Blocks.Block;
 import GameMap.GameMap;
+import GameMap.GameObjects.GameObject;
 import GameMap.Tiles.Tile;
 import VkRender.GPUObjects.GameMapVertex;
+import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.awt.*;
 import java.util.ArrayList;
 
-public class Unit {
+public class Unit extends GameObject {
 
     public Point tilePosition;
-    int textureIndex;
+    final int textureIndex;
 
     UnitStats stats;
 
@@ -30,16 +33,23 @@ public class Unit {
 
     private void create(GameMap gameMap, ArrayList<Action> actions) {
         Tile tile = gameMap.getTile(this.tilePosition);
-        if (tile.getUnit() == null) {
+        Block block = gameMap.getBlock(this.tilePosition);
+        if (block.getStructure() == null && tile.getUnit() == null) {
             tile.setUnit(this);
             Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);
             for (int vy = 0; vy < 2; vy++) {
                 for (int vx = 0; vx < 2; vx++) {
-                    GameMapVertex vertex = tile.getVertex(vy, vx);
-                    vertex.setTextureIndex(textureIndex);
-                    vertex.setColor(zero);
+                    GameMapVertex vertex = new GameMapVertex(
+                            tile.getVertex(vx, vy).getPos(),
+                            zero,
+                            new Vector2f(vx, vy),
+                            this.textureIndex,
+                            0
+                    );
+                    this.setVertex(vx, vy, vertex);
                 }
             }
+            gameMap.objects.add(this);
         } else {
             throw new Error("Cannot place unit: Tile already occupied " + tilePosition);
         }

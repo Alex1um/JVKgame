@@ -3,6 +3,7 @@ package Game;
 import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameObjects.Structures.House;
+import GameMap.GameObjects.Units.Master;
 import GameMap.GameMap;
 import GameMap.GameObjects.Structures.Temple;
 import UI.VkFrame;
@@ -55,13 +56,15 @@ public final class Game {
         public void mouseClicked(MouseEvent e) {
             super.mouseClicked(e);
             if (e != null) {
-                Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
-
-//                System.out.println(block);
-                if (block != null) {
-//                    System.out.println(block.getStructure());
+                if (e.getButton() == MouseEvent.BUTTON1) {
                     try {
                         new House().build(gameMap, actions, localPlayerView.getBlockPositionByClick(e.getPoint()));
+                    } catch (Throwable err) {
+                        System.out.println("Cannot build house: " + err);
+                    }
+                } else if (e.getButton() == MouseEvent.BUTTON3) {
+                    try {
+                        new Master().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                     } catch (Throwable err) {
                         System.out.println("Cannot build house: " + err);
                     }

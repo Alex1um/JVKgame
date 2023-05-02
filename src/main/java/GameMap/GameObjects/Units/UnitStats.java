@@ -5,4 +5,9 @@ public class UnitStats {
     Integer hp;
     Integer speedTilesPerFrame;
 
+    public UnitStats(Integer hpMax, Integer speedTilesPerFrame) {
+        this.hpMax = hpMax;
+        this.hp = hpMax;
+        this.speedTilesPerFrame = speedTilesPerFrame;
+    }
 }

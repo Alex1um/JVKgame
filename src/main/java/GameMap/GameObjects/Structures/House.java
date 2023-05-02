@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class House extends BuildableStructure {
 
     public House() {
-        super(3, 2, Duration.ofSeconds(5), new StructureStats(200, "House"));
+        super(2, 1, Duration.ofSeconds(5), new StructureStats(200, "House"));
     }
 
     @Override
