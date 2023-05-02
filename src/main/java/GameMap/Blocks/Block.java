@@ -1,6 +1,6 @@
 package GameMap.Blocks;
 
-import GameMap.Blocks.Structures.Structure;
+import GameMap.GameObjects.Structures.Structure;
 import GameMap.Tiles.Tile;
 import org.jetbrains.annotations.Nullable;
 

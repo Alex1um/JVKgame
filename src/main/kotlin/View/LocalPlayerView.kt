@@ -51,20 +51,20 @@ class LocalPlayerView internal constructor(
 
     }
 
-    val indexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
+    val mapIndexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
         get;
 
-    val vertices: MutableList<GameMapVertex> = mutableListOf();
+    val mapVertices: MutableList<GameMapVertex> = mutableListOf();
 
     val camera = Camera(cameraInitPoint.x.toFloat(), cameraInitPoint.y.toFloat())
 
     init {
-        generateVertices(gameMap)
-        generateIndexes(gameMap)
+        generateMapVertices(gameMap)
+        generateMapIndexes(gameMap)
     }
 
-    private fun generateVertices(map: GameMap): List<GameMapVertex> {
-        vertices.clear()
+    private fun generateMapVertices(map: GameMap): List<GameMapVertex> {
+        mapVertices.clear()
         var tileArrayIndex = 0;
         for (blockY in 0 until map.size) {
             for (blockX in 0 until map.size) {
@@ -72,51 +72,38 @@ class LocalPlayerView internal constructor(
                 for (tileY in 0 until map.blockSize) {
                     for (tileX in 0 until map.blockSize) {
                         val tile = block.getTile(tileX, tileY);
-                        tile.setVertexesIndex(tileArrayIndex)
                         tileArrayIndex += 1
                         for (y in 0 until 2) {
                             for (x in 0 until 2) {
-//                                val tileColor = Vector4f()
-//                                tile.getVertexColor(y * 2 + x, tileColor)
-//                                vertices.add(
-//                                    Vertex(
-//                                        Vector2f(
-//                                            ((blockX * map.blockSize + tileX) * tileSizePX + x * tileSizePX).toFloat(),
-//                                            ((blockY * map.blockSize + tileY) * tileSizePX + y * tileSizePX).toFloat(),
-//                                        ),
-//                                        tileColor,
-//                                        Vector2f(x.toFloat(), y.toFloat())
-//                                    )
-//                                )
-                                vertices.add(tile.getVertex(x, y))
+                                mapVertices.add(tile.getVertex(x, y))
                             }
                         }
                     }
                 }
             }
         }
-        return vertices
+        return mapVertices
     }
 
-    private fun generateIndexes(map: GameMap): MutableList<Int> {
-        indexes.clear()
+    private fun generateMapIndexes(map: GameMap): MutableList<Int> {
+        mapIndexes.clear()
         var tileIndex = 0
         for (blockY in 0 until map.size) {
             for (blockX in 0 until map.size) {
                 for (tileY in 0 until map.blockSize) {
                     for (tileX in 0 until map.blockSize) {
-                        indexes.add(tileIndex)
-                        indexes.add(tileIndex + 1)
-                        indexes.add(tileIndex + 3)
-                        indexes.add(tileIndex + 3)
-                        indexes.add(tileIndex + 2)
-                        indexes.add(tileIndex)
+                        mapIndexes.add(tileIndex)
+                        mapIndexes.add(tileIndex + 1)
+                        mapIndexes.add(tileIndex + 3)
+                        mapIndexes.add(tileIndex + 3)
+                        mapIndexes.add(tileIndex + 2)
+                        mapIndexes.add(tileIndex)
                         tileIndex += 4;
                     }
                 }
             }
         }
-        return indexes
+        return mapIndexes
     }
 
     fun getTileByMouseClick(clickPos: Point): Tile? {
@@ -177,5 +164,17 @@ class LocalPlayerView internal constructor(
         }
     }
 
+    var mapObjects: List<GameMapVertex> = listOf()
+        private set
+        get() {
+            if (field.size != gameMap.objects.size * 4) {
+                field = gameMap.objects.flatMap { it.vertixes.flatten() }
+            }
+            return field
+        }
+
+    fun getMapObjectsIndexCount(): Int {
+        return gameMap.objects.size * 6
+    }
 
 }

@@ -38,8 +38,9 @@ class DescriptorSets(
                 .descriptorPool(descriptorPool.descriptorPool)
                 .pSetLayouts(layouts)
 
-            if (vkAllocateDescriptorSets(ldevice.device, allocInfo, descriptorSets) != VK_SUCCESS) {
-                throw IllegalStateException("Cannot allocate descriptor sets")
+            val error = vkAllocateDescriptorSets(ldevice.device, allocInfo, descriptorSets)
+            if (error != VK_SUCCESS) {
+                throw IllegalStateException("Cannot allocate descriptor sets: " + error)
             }
 
             val descriptorWriteCount = arrayOf(ssb != null, sampler != null, textures != null).count { it }

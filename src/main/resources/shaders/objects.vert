@@ -1,6 +1,5 @@
 #version 450
 
-
 layout(binding = 0) uniform UniformBufferObject {
     vec2 offset;
     float scale;
@@ -18,8 +17,7 @@ layout(location = 2) out int fragTextureIndex;
 layout(location = 3) out int fragFlags;
 
 void main() {
-//    gl_Position = vec4((inPosition - ubo.cameraProps.xy) / ubo.cameraProps.z, .0, 1.0);
-    gl_Position = vec4(inPosition.x * ubo.scale + ubo.offset.x, inPosition.y * ubo.scale + ubo.offset.y, .0, 1.0);
+    gl_Position = vec4(inPosition.x * ubo.scale + ubo.offset.x, inPosition.y * ubo.scale + ubo.offset.y, .5, 1.0);
     fragColor = inColor;
     fragTexCoordr = inTexCoord;
     fragTextureIndex = inTextureIndex;

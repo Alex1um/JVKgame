@@ -1,7 +1,7 @@
 package Controller.Players;
 
-import GameMap.Blocks.Structures.Structure;
-import GameMap.Units.Unit;
+import GameMap.GameObjects.Structures.Structure;
+import GameMap.GameObjects.Units.Unit;
 
 import java.util.ArrayList;
 

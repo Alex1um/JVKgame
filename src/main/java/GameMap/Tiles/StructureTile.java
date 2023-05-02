@@ -1,6 +1,6 @@
 package GameMap.Tiles;
 
-import GameMap.Blocks.Structures.Structure;
+import GameMap.GameObjects.Structures.Structure;
 import VkRender.GPUObjects.GameMapVertex;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;

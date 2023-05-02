@@ -1,4 +1,4 @@
-package GameMap.Blocks.Structures;
+package GameMap.GameObjects.Structures;
 
 import Game.Actions.Action;
 import GameMap.GameMap;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class House extends BuildableStructure {
 
     public House() {
-        super(3, 2, Duration.ofSeconds(5));
+        super(3, 2, Duration.ofSeconds(5), new StructureStats(200, "House"));
     }
 
     @Override

@@ -3,7 +3,7 @@ package GameMap.Tiles;
 import VkRender.GPUObjects.GameMapVertex;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import GameMap.Units.Unit;
+import GameMap.GameObjects.Units.Unit;
 import org.joml.Vector4f;
 import org.joml.Vector2f;
 
@@ -26,13 +26,13 @@ public abstract class Tile {
 
     final int textureIndex;
 
-    public int getVertexesIndex() {
-        return vertexesIndex;
+    @Nullable
+    public Unit getUnit() {
+        return unit;
     }
 
-    int vertexesIndex;
-    public void setVertexesIndex(int vertexesIndex) {
-        this.vertexesIndex = vertexesIndex;
+    public void setUnit(@Nullable Unit unit) {
+        this.unit = unit;
     }
 
     @Nullable

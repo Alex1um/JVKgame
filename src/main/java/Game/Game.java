@@ -2,21 +2,17 @@ package Game;
 
 import Game.Actions.Action;
 import GameMap.Blocks.Block;
-import GameMap.Blocks.Structures.House;
-import GameMap.Blocks.Structures.Temple;
+import GameMap.GameObjects.Structures.House;
 import GameMap.GameMap;
+import GameMap.GameObjects.Structures.Temple;
 import UI.VkFrame;
 import View.LocalPlayerView;
-import VkRender.Config;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class Game {
 

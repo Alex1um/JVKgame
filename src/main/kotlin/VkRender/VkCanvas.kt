@@ -1,7 +1,6 @@
 package VkRender
 
 import View.LocalPlayerView
-import View.VkUI
 import VkRender.Descriptors.DescriptorPool
 import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.Descriptors.DescriptorSets
@@ -9,6 +8,7 @@ import VkRender.Descriptors.FilledDescriptorSetLayout
 import VkRender.GPUObjects.GameMapVertex
 import VkRender.GPUObjects.UIVertex
 import VkRender.Pipelines.GraphicsPipeline
+import VkRender.Pipelines.GraphicsPipelineCreator
 import VkRender.ShaderModule.FragmentShader
 import VkRender.ShaderModule.VertexShader
 import VkRender.Surfaces.NativeSurface
@@ -20,6 +20,7 @@ import VkRender.Textures.Sampler
 import VkRender.buffers.IndexBuffer
 import VkRender.buffers.UpdatingUniformBuffer
 import VkRender.buffers.VertexBuffer
+import VkRender.buffers.VertexStagingBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
@@ -42,38 +43,39 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         private set
     lateinit var swapChain: SwapChain
         private set
-    lateinit var descriptorSetLayout: FilledDescriptorSetLayout
-        private set
-    lateinit var pipeline: GraphicsPipeline
-        private set
     lateinit var commands: CommandPool
         private set
     lateinit var inFlightFences: Fences
         private set
     lateinit var imageAvailableSemaphore: Semaphores
     lateinit var renderFinishedSemaphore: Semaphores
-    private lateinit var vertexBuffer: VertexBuffer
+
+    lateinit var descriptorSetLayout: FilledDescriptorSetLayout
+        private set
+    lateinit var descriptorPool: DescriptorPool
+    lateinit var pipeline: GraphicsPipeline
+        private set
+    private lateinit var vertexBuffer: VertexStagingBuffer
     private lateinit var indexBuffer: IndexBuffer
     lateinit var updatingUniformBuffer: UpdatingUniformBuffer
     lateinit var textures: Images
     lateinit var sampler: Sampler
 
-    lateinit var descriptorPool: DescriptorPool
     lateinit var descriptorSets: DescriptorSets
 
-    private var currentFrame = 0
-    private var framebufferResized = false
+    //objectts
+    lateinit var objDescriptorSetLayout: FilledDescriptorSetLayout
+        private set
+    lateinit var objDescriptorPool: DescriptorPool
+    lateinit var objPipeline: GraphicsPipeline
+        private set
+    private lateinit var objVertexBuffer: VertexBuffer
+    lateinit var objTextures: Images
+    lateinit var objSampler: Sampler
 
-    val vertices: List<GameMapVertex> = localPlayerView.vertices
+    lateinit var objDescriptorSets: DescriptorSets
 
-    var indexes: List<Int> = localPlayerView.indexes
-        set(value) {
-            field = value
-            if (this::device.isInitialized) {
-                indexBuffer = IndexBuffer(device, physicalDevice, commands, value)
-            }
-        }
-
+    //ui
     lateinit var UIdescriptorSetLayout: FilledDescriptorSetLayout
         private set
     lateinit var UIdescriptorPool: DescriptorPool
@@ -83,6 +85,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
     lateinit var UIupdatingUniformBuffer: UpdatingUniformBuffer
     lateinit var UIdescriptorSets: DescriptorSets
 
+    private var currentFrame = 0
+    private var framebufferResized = false
     override fun initVK() {
 
         addComponentListener(this)
@@ -96,11 +100,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
         textures = Images(
             "build/resources/main/images/Grass1.png",
-            "build/resources/main/images/Structure1.png",
-            "build/resources/main/images/house.png",
-            "build/resources/main/images/house2.png",
-            "build/resources/main/images/temple2.png",
-            "build/resources/main/images/temple-destroyed.png",
         )
         descriptorSetLayout = DescriptorSetLayout(device)
             .addUniforms()
@@ -109,7 +108,10 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             .done()
         descriptorPool = descriptorSetLayout.getPool()
 
-        pipeline = GraphicsPipeline(device, renderPass, GameMapVertex.properties, descriptorSetLayout,
+        pipeline = GraphicsPipelineCreator()
+            .fillDefault()
+            .makeViewPortAndScissorDynamicStates()
+            .create(device, renderPass, GameMapVertex.properties, descriptorSetLayout,
             VertexShader(device, "build/resources/main/shaders/gameMap.vert.spv"),
             FragmentShader(device, "build/resources/main/shaders/gameMap.frag.spv")
             )
@@ -118,23 +120,67 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         sampler = Sampler(device, physicalDevice)
         updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
 
-        vertexBuffer = VertexBuffer(device, physicalDevice, vertices.size, GameMapVertex.properties)
-        indexBuffer = IndexBuffer(device, physicalDevice, commands, indexes)
+        vertexBuffer = VertexStagingBuffer(device, physicalDevice, localPlayerView.mapVertices, commands)
+        indexBuffer = IndexBuffer(device, physicalDevice, commands, localPlayerView.mapIndexes)
         descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, sampler, textures)
 
+        //objects
+        objTextures = Images(
+            "build/resources/main/images/Structure1.png",
+            "build/resources/main/images/house.png",
+            "build/resources/main/images/house2.png",
+            "build/resources/main/images/temple2.png",
+            "build/resources/main/images/temple-destroyed.png",
+        )
+        objDescriptorSetLayout = DescriptorSetLayout(device)
+            .addUniforms()
+            .addSamplers(stageFlags = VK13.VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addSampledTextures(objTextures,stageFlags = VK13.VK_SHADER_STAGE_FRAGMENT_BIT)
+            .done()
+        objDescriptorPool = objDescriptorSetLayout.getPool()
+
+        objPipeline = GraphicsPipelineCreator()
+            .makeViewPortAndScissorDynamicStates()
+            .fillDefault()
+            .create(device, renderPass, GameMapVertex.properties, objDescriptorSetLayout,
+            VertexShader(device, "build/resources/main/shaders/objects.vert.spv"),
+            FragmentShader(device, "build/resources/main/shaders/objects.frag.spv")
+        )
+
+        objTextures.init(device, physicalDevice, commands)
+        objSampler = Sampler(device, physicalDevice)
+
+        objVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.mapVertices.size, GameMapVertex.properties)
+        objDescriptorSets = DescriptorSets(device, objDescriptorPool, objDescriptorSetLayout, updatingUniformBuffer, objSampler, objTextures)
+
+        // ui
         UIdescriptorSetLayout = DescriptorSetLayout(device)
             .addUniforms()
             .done()
 
         UIdescriptorPool = UIdescriptorSetLayout.getPool()
 
-        UIpipeline = GraphicsPipeline(device, renderPass, UIVertex.properties,
+        val UIpipelineCreator = GraphicsPipelineCreator()
+            .fillDefault()
+            .makeViewPortAndScissorDynamicStates()
+
+        UIpipelineCreator.colorBlendAttachment
+            .blendEnable(true)
+            .alphaBlendOp(VK13.VK_BLEND_OP_ADD)
+            .srcAlphaBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
+            .dstAlphaBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
+            .colorBlendOp(VK13.VK_BLEND_OP_ADD)
+            .srcColorBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
+            .dstColorBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
+
+        UIpipeline = UIpipelineCreator
+            .create(device, renderPass, UIVertex.properties,
             UIdescriptorSetLayout,
             VertexShader(device, "build/resources/main/shaders/ui.vert.spv"),
             FragmentShader(device, "build/resources/main/shaders/ui.frag.spv")
             )
 
-        UIvertexBuffer = VertexBuffer(device, physicalDevice, 4 * 2, UIVertex.properties)
+        UIvertexBuffer = VertexBuffer(device, physicalDevice, 4, UIVertex.properties)
         UIindexBuffer = IndexBuffer(device, physicalDevice, commands, localPlayerView.vkUI.indexes)
         UIupdatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 2L)
         UIdescriptorSets = DescriptorSets(device, UIdescriptorPool, UIdescriptorSetLayout, UIupdatingUniformBuffer)
@@ -195,7 +241,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                     this.height.toFloat()
                 )
 
-                vertexBuffer.update(vertices)
+//                vertexBuffer.update(vertices)
+                objVertexBuffer.update(localPlayerView.mapObjects)
                 UIvertexBuffer.update(localPlayerView.vkUI.vertixes)
 
                 record(currentFrame, imageIndex)
@@ -296,6 +343,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                         .height(height)
                 }
 
+            // map
             VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
 
             VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
@@ -310,10 +358,24 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             var currentDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
             VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
 
-            VK13.vkCmdDrawIndexed(currentCommandBuffer, indexes.size, 1, 0, 0, 0)
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.mapIndexes.size, 1, 0, 0, 0)
 
-//            val layout = stack.longs(descriptorSetLayout.descriptorSetLayout)
-//            VK13.vkCmdDraw(currentCommandBuffer, vertices.size, 1, 0, 0)
+            //objects
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objPipeline.graphicsPipeLine)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
+            VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissor)
+
+            val objVertexBufferptr = stack.longs(objVertexBuffer.buffer.vertexBuffer)
+            val objOffsets = stack.longs(0)
+            VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, objVertexBufferptr, objOffsets)
+
+            VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
+
+            currentDescriptorSet = stack.longs(objDescriptorSets.descriptorSets[currentFrame])
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objPipeline.layout, 0, currentDescriptorSet, null)
+
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.getMapObjectsIndexCount(), 1, 0, 0, 0)
 
             // ui
             VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, UIpipeline.graphicsPipeLine)
