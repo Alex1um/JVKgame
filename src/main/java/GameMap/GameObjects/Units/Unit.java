@@ -69,7 +69,6 @@ public class Unit extends GameObject {
 
     @Nullable
     private Action movingAction = null;
-
     @Nullable
     private Point movingDestination = null;
     public void move(GameMap gameMap, ArrayList<Action> actions, Point destination) {

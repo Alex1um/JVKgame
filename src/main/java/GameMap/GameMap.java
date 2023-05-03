@@ -5,6 +5,7 @@ import GameMap.Blocks.GrassBlock;
 import GameMap.GameObjects.GameObject;
 import GameMap.Tiles.Tile;
 import VkRender.Config;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Random;
 
 import java.awt.*;
@@ -23,16 +24,28 @@ public class GameMap {
         return blockSize;
     }
 
+    @Nullable
     public Block getBlockByPos(int blockX, int blockY) {
-        return blocks[blockY][blockX];
+
+        if (blockX >= 0 && blockY >= 0 && blockX < size && blockY < size ) {
+            return blocks[blockY][blockX];
+        } else {
+            return null;
+        }
     }
 
-    public Block getBlockByPos(Point pos) {
-        return blocks[pos.y][pos.x];
+    @Nullable
+    public Block getBlockByPos(Point blockPos) {
+        return getBlockByPos(blockPos.x, blockPos.y);
     }
 
+    @Nullable
     public Block getBlockByTilePos(int tileX, int tileY) {
-        return blocks[tileY / blockSize][tileX / blockSize];
+        if (tileX >= 0 && tileY >= 0 && tileX < getFullTileSize() && tileY < getFullTileSize()) {
+            return blocks[tileY / blockSize][tileX / blockSize];
+        } else {
+            return null;
+        }
     }
 
     public Block getBlockByTilePos(Point tilePos) {
@@ -43,13 +56,21 @@ public class GameMap {
         return new Point(tileX / blockSize, tileY / blockSize);
     }
 
-    public Tile getTile(int tileX, int tileY) {
-        int blockX = tileX / blockSize;
-        int blockY = tileY / blockSize;
-        int tileRelY = tileY % blockSize;
-        int tileRelX = tileX % blockSize;
+    public Point getBlockPosByTilePos(Point tilePos) {
+        return new Point(tilePos.x / blockSize, tilePos.y / blockSize);
+    }
 
-        return blocks[blockY][blockX].getTile(tileRelX, tileRelY);
+    @Nullable
+    public Tile getTile(int tileX, int tileY) {
+        if (tileX >= 0 && tileY >= 0 && tileX < getFullTileSize() && tileY < getFullTileSize()) {
+            int blockX = tileX / blockSize;
+            int blockY = tileY / blockSize;
+            int tileRelY = tileY % blockSize;
+            int tileRelX = tileX % blockSize;
+            return blocks[blockY][blockX].getTile(tileRelX, tileRelY);
+        } else {
+            return null;
+        }
     }
 
     public Tile getTile(Point tilePosition) {

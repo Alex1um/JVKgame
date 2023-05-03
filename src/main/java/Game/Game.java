@@ -27,11 +27,19 @@ public final class Game {
         private final Rectangle selectionRect = new Rectangle();
         private final ArrayList<GameObject> selectedObjects = new ArrayList<>();
 
+        private void deselect() {
+            for (GameObject obj : selectedObjects) {
+                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
+            }
+            selectedObjects.clear();
+        }
+
         @Override
         public void mousePressed(MouseEvent e) {
             super.mousePressed(e);
             if (e != null && e.getButton() == MouseEvent.BUTTON1) {
                 isSelecting = true;
+                deselect();
                 selectionStartingPoint = e.getPoint();
             }
         }
@@ -42,7 +50,23 @@ public final class Game {
             if (isSelecting && e != null) {
                 isSelecting = false;
                 localPlayerView.getVkUI().select(e.getPoint(), e.getPoint());
-//                UI.repaintCanvas();
+
+                Point p1 = localPlayerView.getTilePositionByClick(selectionStartingPoint);
+                Point p2 = localPlayerView.getTilePositionByClick(e.getPoint());
+                int incX = Integer.signum(p2.x - p1.x);
+                int incY = Integer.signum(p2.y - p1.y);
+
+                for (int y = p1.y; y != p2.y; y += incY) {
+                    for (int x = p1.x; x != p2.x; x += incX) {
+                        Tile tile = gameMap.getTile(x, y);
+                        if (tile != null && tile.getUnit() != null) {
+                            Unit unit = tile.getUnit();
+                            selectedObjects.add(unit);
+                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
+                        }
+                    }
+                }
+
             }
         }
 
@@ -68,10 +92,15 @@ public final class Game {
                             selectedObjects.add(unit);
                             localPlayerView.getVkUI().setObjecthighlight(unit, 1);
                         } else {
-                            for (GameObject obj : selectedObjects) {
-                                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
-                            }
-                            selectedObjects.clear();
+                            deselect();
+                        }
+                    }
+                } else if (e.getButton() == MouseEvent.BUTTON2) {
+                    Tile tile = localPlayerView.getTileByMouseClick(e.getPoint());
+                    if (tile != null) {
+                        Unit unit = tile.getUnit();
+                        if (unit instanceof Master) {
+                            unit.getAbilities().get(0).use(actions);
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {

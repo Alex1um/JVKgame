@@ -68,7 +68,7 @@ class LocalPlayerView internal constructor(
         var tileArrayIndex = 0;
         for (blockY in 0 until map.size) {
             for (blockX in 0 until map.size) {
-                val block = map.getBlockByPos(blockX, blockY);
+                val block = map.getBlockByPos(blockX, blockY)!!;
                 for (tileY in 0 until map.blockSize) {
                     for (tileX in 0 until map.blockSize) {
                         val tile = block.getTile(tileX, tileY);
@@ -106,62 +106,40 @@ class LocalPlayerView internal constructor(
         return mapIndexes
     }
 
-    fun getTileByMouseClick(clickPos: Point): Tile? {
-
-        //                      from center   visual all tiles size    tile size
+    fun getTilePositionByClick(clickPos: Point): Point {
         val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
         val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
         val mousePosX: Float = (clickPos.x
             .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
         val mousePosY: Float = (clickPos.y
             .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
-            return gameMap.getTile(mousePosX.toInt(), mousePosY.toInt())
-        } else {
-            return null
-        }
+//        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
+        return Point(mousePosX.toInt(), mousePosY.toInt());
+//        } else {
+//            return null
+//        }
+    }
+    fun getTileByMouseClick(clickPos: Point): Tile? {
+        val mousePos = getTilePositionByClick(clickPos)
+//        if (mousePos.x >= 0 && mousePos.y >= 0 && mousePos.y < gameMap.fullTileSize && mousePos.x < gameMap.fullTileSize) {
+        return gameMap.getTile(mousePos)
+//        } else {
+//            return null
+//        }
     }
 
     fun getBlockByMouseClick(clickPos: Point): Block? {
-        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
-        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
-        val mousePosX: Float = (clickPos.x
-            .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
-        val mousePosY: Float = (clickPos.y
-            .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
-            return gameMap.getBlockByTilePos(mousePosX.toInt(), mousePosY.toInt());
-        } else {
-            return null
-        }
+        val mousePos = getTilePositionByClick(clickPos)
+//        if (mousePos.x >= 0 && mousePos.y >= 0 && mousePos.y < gameMap.fullTileSize && mousePos.x < gameMap.fullTileSize) {
+        return gameMap.getBlockByTilePos(mousePos)
+//        } else {
+//            return null
+//        }
     }
 
-    fun getTilePositionByClick(clickPos: Point): Point? {
-        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
-        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
-        val mousePosX: Float = (clickPos.x
-            .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
-        val mousePosY: Float = (clickPos.y
-            .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
-            return Point(mousePosX.toInt(), mousePosY.toInt());
-        } else {
-            return null
-        }
-    }
-
-    fun getBlockPositionByClick(clickPos: Point): Point? {
-        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
-        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
-        val mousePosX: Float = (clickPos.x
-            .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
-        val mousePosY: Float = (clickPos.y
-            .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
-            return gameMap.getBlockPosByTilePos(mousePosX.toInt(), mousePosY.toInt());
-        } else {
-            return null
-        }
+    fun getBlockPositionByClick(clickPos: Point): Point {
+        val mousePos = getTilePositionByClick(clickPos)
+        return gameMap.getBlockPosByTilePos(mousePos)
     }
 
     var mapObjects: List<GameMapVertex> = listOf()
