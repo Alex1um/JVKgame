@@ -6,6 +6,8 @@ import GameMap.GameObjects.Structures.House;
 import GameMap.GameObjects.Units.Master;
 import GameMap.GameMap;
 import GameMap.GameObjects.Structures.Temple;
+import GameMap.GameObjects.Units.Unit;
+import GameMap.Tiles.Tile;
 import UI.VkFrame;
 import View.LocalPlayerView;
 
@@ -57,16 +59,21 @@ public final class Game {
             super.mouseClicked(e);
             if (e != null) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    try {
-                        new House().build(gameMap, actions, localPlayerView.getBlockPositionByClick(e.getPoint()));
-                    } catch (Throwable err) {
-                        System.out.println("Cannot build house: " + err);
+                    Tile tile = localPlayerView.getTileByMouseClick(e.getPoint());
+                    if (tile != null) {
+                        Unit unit = tile.getUnit();
+                        if (unit != null) {
+                            System.out.println(unit.getAbilities());
+                            if (unit instanceof Master) {
+                                unit.getAbilities().get(0).use(actions);
+                            }
+                        }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
                     try {
                         new Master().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                     } catch (Throwable err) {
-                        System.out.println("Cannot build house: " + err);
+                        System.out.println("Cannot deploy unit house: " + err);
                     }
                 }
             }

@@ -68,7 +68,7 @@ class LocalPlayerView internal constructor(
         var tileArrayIndex = 0;
         for (blockY in 0 until map.size) {
             for (blockX in 0 until map.size) {
-                val block = map.getBlock(blockX, blockY);
+                val block = map.getBlockByPos(blockX, blockY);
                 for (tileY in 0 until map.blockSize) {
                     for (tileX in 0 until map.blockSize) {
                         val tile = block.getTile(tileX, tileY);
@@ -115,7 +115,7 @@ class LocalPlayerView internal constructor(
             .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
         val mousePosY: Float = (clickPos.y
             .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        if (mousePosX > 0 && mousePosY > 0 && mousePosY < gameMap.fullTileSize && mousePosX > gameMap.fullTileSize) {
+        if (mousePosX >= 0 && mousePosY >= 0 && mousePosY < gameMap.fullTileSize && mousePosX < gameMap.fullTileSize) {
             return gameMap.getTile(mousePosX.toInt(), mousePosY.toInt())
         } else {
             return null
@@ -168,7 +168,7 @@ class LocalPlayerView internal constructor(
         private set
         get() {
             if (field.size != gameMap.objects.size * 4) {
-                field = gameMap.objects.flatMap { it.vertixes.flatten() }
+                field = gameMap.objects.flatMap { it.vertexes.flatten() }
             }
             return field
         }

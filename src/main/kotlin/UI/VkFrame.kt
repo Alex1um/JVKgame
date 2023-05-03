@@ -41,7 +41,6 @@ class VkFrame(title: String, localPlayerView: LocalPlayerView, FPS: Int = 60, lo
 
     fun repaintCanvas() {
         canvas.repaint()
-//        canvas.paint(canvas.graphics)
     }
 
 }

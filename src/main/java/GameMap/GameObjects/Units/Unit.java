@@ -10,6 +10,7 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.awt.*;
+import java.lang.annotation.*;
 import java.util.ArrayList;
 
 public class Unit extends GameObject {
@@ -20,6 +21,7 @@ public class Unit extends GameObject {
     UnitStats stats;
 
     protected Unit(int textureIndex, UnitStats stats) {
+        super();
         this.textureIndex = textureIndex;
         this.stats = stats;
     }
@@ -33,7 +35,7 @@ public class Unit extends GameObject {
 
     private void create(GameMap gameMap, ArrayList<Action> actions) {
         Tile tile = gameMap.getTile(this.tilePosition);
-        Block block = gameMap.getBlock(this.tilePosition);
+        Block block = gameMap.getBlockByTilePos(this.tilePosition);
         if (block.getStructure() == null && tile.getUnit() == null) {
             tile.setUnit(this);
             Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);

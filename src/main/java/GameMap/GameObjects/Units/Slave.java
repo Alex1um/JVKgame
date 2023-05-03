@@ -1,7 +1,7 @@
 package GameMap.GameObjects.Units;
 
 public class Slave extends Unit {
-    protected Slave() {
+    public Slave() {
         super(1, new UnitStats(5, 1));
     }
 }

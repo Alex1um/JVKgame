@@ -23,16 +23,20 @@ public class GameMap {
         return blockSize;
     }
 
-    public Block getBlock(int blockX, int blockY) {
+    public Block getBlockByPos(int blockX, int blockY) {
         return blocks[blockY][blockX];
     }
 
-    public Block getBlock(Point pos) {
+    public Block getBlockByPos(Point pos) {
         return blocks[pos.y][pos.x];
     }
 
     public Block getBlockByTilePos(int tileX, int tileY) {
         return blocks[tileY / blockSize][tileX / blockSize];
+    }
+
+    public Block getBlockByTilePos(Point tilePos) {
+        return getBlockByTilePos(tilePos.x, tilePos.y);
     }
 
     public Point getBlockPosByTilePos(int tileX, int tileY) {
@@ -70,6 +74,35 @@ public class GameMap {
                 blocks[blockY][blockX] = new GrassBlock(r, blockSize, Config.tileSize, blockX, blockY);
             }
         }
+    }
+
+    public Point getFreeTilePos(Point center, int radius) {
+        int distance = 1;
+        while (distance <= radius) {
+            // Перебираем клетки на расстоянии distance от центра
+            for (int i = -distance; i <= distance; i++) {
+                for (int j = -distance; j <= distance; j++) {
+                    // Пропускаем клетки, которые находятся дальше, чем distance
+                    if (Math.abs(i) + Math.abs(j) > distance) {
+                        continue;
+                    }
+                    int x = center.x + i;
+                    int y = center.y + j;
+                    // Пропускаем клетки, которые находятся за пределами поля
+                    if (x < 0 || y < 0 || x >= this.getFullTileSize() || y >= this.getFullTileSize()) {
+                        continue;
+                    }
+                    // Пропускаем клетки, которые не являются пустыми
+                    if (this.getTile(x, y).getUnit() != null || this.getBlockByTilePos(x, y).getStructure() != null) {
+                        continue;
+                    }
+                    // Клетка нашлась
+                    return new Point(x, y);
+                }
+            }
+            distance++;
+        }
+        return null;
     }
 
 }

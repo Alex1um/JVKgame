@@ -31,7 +31,7 @@ public abstract class Structure extends GameObject {
     }
 
     protected void onBuilt(GameMap gameMap, ArrayList<Action> actions) {
-        Block block = gameMap.getBlock(blockPosition);
+        Block block = gameMap.getBlockByPos(blockPosition);
 
         boolean canBuild = block.getStructure() == null;
         if (canBuild) {
