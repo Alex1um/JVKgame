@@ -2,6 +2,7 @@ package Game;
 
 import Game.Actions.Action;
 import GameMap.Blocks.Block;
+import GameMap.GameObjects.GameObject;
 import GameMap.GameObjects.Structures.House;
 import GameMap.GameObjects.Units.Master;
 import GameMap.GameMap;
@@ -24,6 +25,7 @@ public final class Game {
         private boolean isSelecting = false;
         private Point selectionStartingPoint = null;
         private final Rectangle selectionRect = new Rectangle();
+        private final ArrayList<GameObject> selectedObjects = new ArrayList<>();
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -63,17 +65,28 @@ public final class Game {
                     if (tile != null) {
                         Unit unit = tile.getUnit();
                         if (unit != null) {
-                            System.out.println(unit.getAbilities());
-                            if (unit instanceof Master) {
-                                unit.getAbilities().get(0).use(actions);
+                            selectedObjects.add(unit);
+                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
+                        } else {
+                            for (GameObject obj : selectedObjects) {
+                                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
                             }
+                            selectedObjects.clear();
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    try {
-                        new Master().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
-                    } catch (Throwable err) {
-                        System.out.println("Cannot deploy unit house: " + err);
+                    if (selectedObjects.isEmpty()) {
+                        try {
+                            new Master().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                        } catch (Throwable err) {
+                            System.out.println("Cannot deploy unit house: " + err);
+                        }
+                    } else {
+                        for (GameObject obj : selectedObjects) {
+                            if (obj instanceof Unit) {
+                                ((Unit) obj).move(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                            }
+                        }
                     }
                 }
             }
@@ -135,15 +148,11 @@ public final class Game {
         public void mouseMoved(MouseEvent e) {
             if (e != null) {
                 Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
-                localPlayerView.getVkUI().highlightBlock(block);
+                localPlayerView.getVkUI().setBlockhighlight(block, 1);
             }
         }
     }
     // View
-    public LocalPlayerView getLocalPlayerView() {
-        return localPlayerView;
-    }
-
     private LocalPlayerView localPlayerView;
 
     private UI.VkFrame UI;

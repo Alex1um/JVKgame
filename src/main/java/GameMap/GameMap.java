@@ -75,9 +75,12 @@ public class GameMap {
             }
         }
     }
-
     public Point getFreeTilePos(Point center, int radius) {
-        int distance = 1;
+        return getFreeTilePos(center, radius, 1);
+    }
+
+    public Point getFreeTilePos(Point center, int radius, int centerRadius) {
+        int distance = centerRadius;
         while (distance <= radius) {
             // Перебираем клетки на расстоянии distance от центра
             for (int i = -distance; i <= distance; i++) {
@@ -105,4 +108,7 @@ public class GameMap {
         return null;
     }
 
+    public boolean isTilePositionFree(Point pos) {
+        return this.getBlockByTilePos(pos).getStructure() == null && this.getTile(pos).getUnit() == null;
+    }
 }

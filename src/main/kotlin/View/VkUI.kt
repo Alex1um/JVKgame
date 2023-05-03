@@ -1,11 +1,11 @@
 package View
 
 import GameMap.Blocks.Block
+import GameMap.GameObjects.GameObject
 import VkRender.GPUObjects.UIVertex
 import org.joml.Vector2f
 import org.joml.Vector4f
 import java.awt.Point
-import java.awt.Rectangle
 import kotlin.math.sign
 
 class VkUI {
@@ -37,16 +37,24 @@ class VkUI {
         }
     }
 
-    fun highlightBlock(block: Block?) {
+    fun setBlockhighlight(block: Block?, highlight: Int) {
         if (block != null) {
             for (tileArr in block.tiles) {
                 for (tile in tileArr) {
                     for (i in 0..1) {
                         for (j in 0..1) {
-                            tile.getVertex(i, j).isHighlighted = 1
+                            tile.getVertex(i, j).isHighlighted = highlight
                         }
                     }
                 }
+            }
+        }
+    }
+
+    fun setObjecthighlight(obj: GameObject, highlight: Int) {
+        for (vertexRow in obj.vertexes) {
+            for (vertex in vertexRow) {
+                vertex.isHighlighted = highlight;
             }
         }
     }
