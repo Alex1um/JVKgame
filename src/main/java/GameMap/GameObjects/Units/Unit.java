@@ -86,7 +86,7 @@ public class Unit extends GameObject {
             int dx = Integer.min(this.stats.speedTilesPerFrame, Math.abs(movingDestination.x - this.tilePosition.x)) * Integer.signum(movingDestination.x - this.tilePosition.x);
             int dy = Integer.min(this.stats.speedTilesPerFrame, Math.abs(movingDestination.y - this.tilePosition.y)) * Integer.signum(movingDestination.y - this.tilePosition.y);
             Point newTilePosition = new Point(this.tilePosition.x + dx, this.tilePosition.y + dy);
-            if (gameMap.isTilePositionFree(newTilePosition)) {
+            if (gameMap.isTilePosValid(newTilePosition) && gameMap.isTilePositionFree(newTilePosition)) {
                 Tile newTile = gameMap.getTile(newTilePosition);
                 Tile oldTile = gameMap.getTile(this.tilePosition);
                 oldTile.setUnit(null);

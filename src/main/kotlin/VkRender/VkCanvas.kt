@@ -29,6 +29,7 @@ import org.lwjgl.vulkan.awt.VKData
 import java.awt.Graphics
 import java.awt.event.*
 import java.io.Closeable
+import java.time.LocalDate
 import kotlin.system.measureNanoTime
 
 class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerView) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
@@ -94,6 +95,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     private var currentFrame = 0
     private var framebufferResized = false
+    private var ticksSinceStart = 0;
 
     val miniMapWidth: Int
         get() {
@@ -149,7 +151,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
         textures.init(device, physicalDevice, commands)
         sampler = Sampler(device, physicalDevice)
-        updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
+        updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 6L)
         miniMapUpdatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
 
         vertexBuffer = VertexStagingBuffer(device, physicalDevice, localPlayerView.mapVertices, commands)
@@ -228,6 +230,15 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         UIupdatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 2L)
         UIdescriptorSets = DescriptorSets(device, UIdescriptorPool, UIdescriptorSetLayout, UIupdatingUniformBuffer)
 
+        for (frame in 0 until Config.MAX_FRAMES_IN_FLIGHT) {
+            miniMapUpdatingUniformBuffer.update(
+                frame,
+                -1f,
+                -1f,
+                2f / Config.tileSize / localPlayerView.gameMap.fullTileSize,
+            )
+        }
+
         MemoryStack.stackPush().use { stack ->
             inFlightFences = Fences(Config.MAX_FRAMES_IN_FLIGHT, device, stack)
 
@@ -276,21 +287,17 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                     localPlayerView.camera.offsetX,
                     localPlayerView.camera.offsetY,
                     localPlayerView.camera.scale,
+                    width.toFloat(),
+                    height.toFloat(),
+                    ticksSinceStart.toFloat(),
                 )
+                ticksSinceStart += 1
 
                 UIupdatingUniformBuffer.update(
                     currentFrame,
                     this.width.toFloat(),
                     this.height.toFloat()
                 )
-
-                miniMapUpdatingUniformBuffer.update(
-                    currentFrame,
-                    -1f,
-                    -1f,
-                    2f / Config.tileSize / localPlayerView.gameMap.fullTileSize,
-                )
-
 
 //                vertexBuffer.update(vertices)
                 objVertexBuffer.update(localPlayerView.mapObjects)

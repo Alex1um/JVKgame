@@ -14,20 +14,20 @@ import java.util.ArrayList;
 public class GameMap {
 
     Block[][] blocks;
-    int size;
-    int blockSize;
-    public int getSize() {
-        return size;
+    int mapSizeBlocks;
+    int blockSizeTiles;
+    public int getMapSizeBlocks() {
+        return mapSizeBlocks;
     }
 
-    public int getBlockSize() {
-        return blockSize;
+    public int getBlockSizeTiles() {
+        return blockSizeTiles;
     }
 
     @Nullable
     public Block getBlockByPos(int blockX, int blockY) {
 
-        if (blockX >= 0 && blockY >= 0 && blockX < size && blockY < size ) {
+        if (blockX >= 0 && blockY >= 0 && blockX < mapSizeBlocks && blockY < mapSizeBlocks) {
             return blocks[blockY][blockX];
         } else {
             return null;
@@ -42,10 +42,24 @@ public class GameMap {
     @Nullable
     public Block getBlockByTilePos(int tileX, int tileY) {
         if (tileX >= 0 && tileY >= 0 && tileX < getFullTileSize() && tileY < getFullTileSize()) {
-            return blocks[tileY / blockSize][tileX / blockSize];
+            return blocks[tileY / blockSizeTiles][tileX / blockSizeTiles];
         } else {
             return null;
         }
+    }
+    public boolean isTilePosValid(int tileX, int tileY) {
+        return tileX >= 0 && tileY >= 0 && tileX < getFullTileSize() && tileY < getFullTileSize();
+    }
+
+    public boolean isTilePosValid(Point tilePos) {
+        return isTilePosValid(tilePos.x, tilePos.y);
+    }
+
+    public boolean isBlockPosValid(int blockX, int blockY) {
+        return blockX >= 0 && blockY >= 0 && blockX < getMapSizeBlocks() && blockY < getMapSizeBlocks();
+    }
+    public boolean isBlockPosValid(Point blockPos) {
+        return isBlockPosValid(blockPos.x, blockPos.y);
     }
 
     public Block getBlockByTilePos(Point tilePos) {
@@ -53,20 +67,20 @@ public class GameMap {
     }
 
     public Point getBlockPosByTilePos(int tileX, int tileY) {
-        return new Point(tileX / blockSize, tileY / blockSize);
+        return new Point(tileX / blockSizeTiles, tileY / blockSizeTiles);
     }
 
     public Point getBlockPosByTilePos(Point tilePos) {
-        return new Point(tilePos.x / blockSize, tilePos.y / blockSize);
+        return new Point(tilePos.x / blockSizeTiles, tilePos.y / blockSizeTiles);
     }
 
     @Nullable
     public Tile getTile(int tileX, int tileY) {
         if (tileX >= 0 && tileY >= 0 && tileX < getFullTileSize() && tileY < getFullTileSize()) {
-            int blockX = tileX / blockSize;
-            int blockY = tileY / blockSize;
-            int tileRelY = tileY % blockSize;
-            int tileRelX = tileX % blockSize;
+            int blockX = tileX / blockSizeTiles;
+            int blockY = tileY / blockSizeTiles;
+            int tileRelY = tileY % blockSizeTiles;
+            int tileRelX = tileX % blockSizeTiles;
             return blocks[blockY][blockX].getTile(tileRelX, tileRelY);
         } else {
             return null;
@@ -78,21 +92,21 @@ public class GameMap {
     }
 
     public int getFullTileSize() {
-        return size * blockSize;
+        return mapSizeBlocks * blockSizeTiles;
     }
 
     public ArrayList<GameObject> objects = new ArrayList<>();
-    public GameMap(int size, int blockSize) {
-        this.blockSize = blockSize;
-        this.size = size;
-        blocks = new Block[size][size];
+    public GameMap(int mapSizeBlocks, int blockSizeTiles) {
+        this.blockSizeTiles = blockSizeTiles;
+        this.mapSizeBlocks = mapSizeBlocks;
+        blocks = new Block[mapSizeBlocks][mapSizeBlocks];
     }
 
     public void generateRandomMap(Long seed) {
         Random r = new Random(seed);
-        for (int blockY = 0; blockY < size; blockY++) {
-            for (int blockX = 0; blockX < size; blockX++) {
-                blocks[blockY][blockX] = new GrassBlock(r, blockSize, Config.tileSize, blockX, blockY);
+        for (int blockY = 0; blockY < mapSizeBlocks; blockY++) {
+            for (int blockX = 0; blockX < mapSizeBlocks; blockX++) {
+                blocks[blockY][blockX] = new GrassBlock(r, blockSizeTiles, Config.tileSize, blockX, blockY);
             }
         }
     }

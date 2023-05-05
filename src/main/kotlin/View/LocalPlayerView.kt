@@ -66,11 +66,11 @@ class LocalPlayerView internal constructor(
     private fun generateMapVertices(map: GameMap): List<GameMapVertex> {
         mapVertices.clear()
         var tileArrayIndex = 0;
-        for (blockY in 0 until map.size) {
-            for (blockX in 0 until map.size) {
+        for (blockY in 0 until map.mapSizeBlocks) {
+            for (blockX in 0 until map.mapSizeBlocks) {
                 val block = map.getBlockByPos(blockX, blockY)!!;
-                for (tileY in 0 until map.blockSize) {
-                    for (tileX in 0 until map.blockSize) {
+                for (tileY in 0 until map.blockSizeTiles) {
+                    for (tileX in 0 until map.blockSizeTiles) {
                         val tile = block.getTile(tileX, tileY);
                         tileArrayIndex += 1
                         for (y in 0 until 2) {
@@ -88,10 +88,10 @@ class LocalPlayerView internal constructor(
     private fun generateMapIndexes(map: GameMap): MutableList<Int> {
         mapIndexes.clear()
         var tileIndex = 0
-        for (blockY in 0 until map.size) {
-            for (blockX in 0 until map.size) {
-                for (tileY in 0 until map.blockSize) {
-                    for (tileX in 0 until map.blockSize) {
+        for (blockY in 0 until map.mapSizeBlocks) {
+            for (blockX in 0 until map.mapSizeBlocks) {
+                for (tileY in 0 until map.blockSizeTiles) {
+                    for (tileX in 0 until map.blockSizeTiles) {
                         mapIndexes.add(tileIndex)
                         mapIndexes.add(tileIndex + 1)
                         mapIndexes.add(tileIndex + 3)
