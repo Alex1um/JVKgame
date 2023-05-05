@@ -94,6 +94,16 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     private var currentFrame = 0
     private var framebufferResized = false
+
+    val miniMapWidth: Int
+        get() {
+            return width / 3
+        }
+
+    val miniMapHeight: Int
+        get() {
+            return height / 3
+        }
     override fun initVK() {
 
         addComponentListener(this)
@@ -436,8 +446,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             val viewportMiniMap = VkViewport.calloc(1, stack)
                 .x(0.0f)
                 .y(0.0f)
-                .width((width / 5).toFloat())
-                .height((height / 5).toFloat())
+                .width(miniMapWidth.toFloat())
+                .height(miniMapHeight.toFloat())
                 .minDepth(0.0f)
                 .maxDepth(1.0f)
 
@@ -447,8 +457,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                         .y(0)
                 }
                 .extent {
-                    it.width(width / 5)
-                        .height(height / 5)
+                    it.width(miniMapWidth)
+                        .height(miniMapHeight)
                 }
 
             // minimap
