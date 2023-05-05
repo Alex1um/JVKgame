@@ -27,6 +27,8 @@ class SwapChain(
     private lateinit var swapChainExtent: VkExtent2D
     lateinit var swapChainFramebuffers: LongArray
         private set;
+    lateinit var swapChainMiniMapFramebuffers: LongArray
+        private set;
 
     init {
         Create(width, height)
@@ -108,12 +110,12 @@ class SwapChain(
     private fun createFrameBuffers(stack: MemoryStack, renderPass: Long, width: Int, height: Int) {
         swapChainFramebuffers = LongArray(swapChainImageViews.size)
         for (i in swapChainImageViews.indices) {
-            val attachments = stack.longs(swapChainImageViews[i].view)
+            val attachments = stack.longs(swapChainImageViews[i].view, swapChainImageViews[i].view)
 
             val framebufferInfo = VkFramebufferCreateInfo.calloc(stack)
                 .sType(VK13.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                 .renderPass(renderPass)
-                .attachmentCount(1)
+                .attachmentCount(2)
                 .pAttachments(attachments)
                 .width(width)
                 .height(height)

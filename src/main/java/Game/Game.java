@@ -191,11 +191,6 @@ public final class Game {
     public Game(int mapSize, int blockSize) {
         gameMap = new GameMap(mapSize, blockSize);
         gameMap.generateRandomMap(System.currentTimeMillis());
-//        gameMap.getBlock(1, 1).placeStructure(new Temple());
-        Temple temple = new Temple();
-        temple.build(gameMap, actions, new Point(1, 1));
-        House house = new House();
-        house.build(gameMap, actions, new Point(0, 0));
 
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));
         UI = new VkFrame("new game", localPlayerView, 60, () -> {
@@ -225,13 +220,11 @@ public final class Game {
         ArrayList<Action> newActions = new ArrayList<Action>();
 
         newActions.clear();
-        synchronized (actions) {
-            for (Action action : actions) {
-                try {
-                    action.execute(gameMap, newActions);
-                } catch (Throwable e) {
-                    System.out.println("Error while doing action " + action + ": " + e);
-                }
+        for (Action action : actions) {
+            try {
+                action.execute(gameMap, newActions);
+            } catch (Throwable e) {
+                System.out.println("Error while doing action " + action + ": " + e);
             }
         }
         actions.clear();

@@ -14,8 +14,8 @@ import java.io.Closeable
 
 class GraphicsPipeline(
     val ldevice: Device,
+    val layout: Long,
     val graphicsPipeLine: Long,
-    val layout: Long
 ) : Closeable {
     override fun close() {
         vkDestroyPipeline(ldevice.device, graphicsPipeLine, null)

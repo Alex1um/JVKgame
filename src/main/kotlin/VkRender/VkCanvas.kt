@@ -55,6 +55,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
     lateinit var descriptorPool: DescriptorPool
     lateinit var pipeline: GraphicsPipeline
         private set
+    lateinit var miniMapPipeline: GraphicsPipeline
+        private set
     private lateinit var vertexBuffer: VertexStagingBuffer
     private lateinit var indexBuffer: IndexBuffer
     lateinit var updatingUniformBuffer: UpdatingUniformBuffer
@@ -68,6 +70,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         private set
     lateinit var objDescriptorPool: DescriptorPool
     lateinit var objPipeline: GraphicsPipeline
+        private set
+    lateinit var objMiniMapPipeline: GraphicsPipeline
         private set
     private lateinit var objVertexBuffer: VertexBuffer
     lateinit var objTextures: Images
@@ -115,6 +119,15 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             VertexShader(device, "build/resources/main/shaders/gameMap.vert.spv"),
             FragmentShader(device, "build/resources/main/shaders/gameMap.frag.spv")
             )
+        // todo: make inheritance
+        miniMapPipeline = GraphicsPipelineCreator()
+            .fillDefault()
+            .makeViewPortAndScissorDynamicStates()
+            .create(device, renderPass, GameMapVertex.properties, descriptorSetLayout,
+                VertexShader(device, "build/resources/main/shaders/gameMap.vert.spv"),
+                FragmentShader(device, "build/resources/main/shaders/gameMap.frag.spv"),
+                subpass = 1,
+            )
 
         textures.init(device, physicalDevice, commands)
         sampler = Sampler(device, physicalDevice)
@@ -140,12 +153,21 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         objDescriptorPool = objDescriptorSetLayout.getPool()
 
         objPipeline = GraphicsPipelineCreator()
-            .makeViewPortAndScissorDynamicStates()
             .fillDefault()
+            .makeViewPortAndScissorDynamicStates()
             .create(device, renderPass, GameMapVertex.properties, objDescriptorSetLayout,
             VertexShader(device, "build/resources/main/shaders/objects.vert.spv"),
             FragmentShader(device, "build/resources/main/shaders/objects.frag.spv")
         )
+
+        objMiniMapPipeline = GraphicsPipelineCreator()
+            .makeViewPortAndScissorDynamicStates()
+            .fillDefault()
+            .create(device, renderPass, GameMapVertex.properties, objDescriptorSetLayout,
+                VertexShader(device, "build/resources/main/shaders/objects.vert.spv"),
+                FragmentShader(device, "build/resources/main/shaders/objects.frag.spv"),
+                subpass = 1,
+            )
 
         objTextures.init(device, physicalDevice, commands)
         objSampler = Sampler(device, physicalDevice)
@@ -247,7 +269,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
                 record(currentFrame, imageIndex)
 
-                val lp2 = stack.mallocLong(1)
+                val lpf = stack.mallocLong(1)
                 val submitInfo = VkSubmitInfo.calloc(stack)
                     .sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO)
                     .pNext(MemoryUtil.NULL)
@@ -255,7 +277,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                     .pWaitSemaphores(Util.lp.put(0, imageAvailableSemaphore[currentFrame]))
                     .pWaitDstStageMask(Util.ip.put(0, VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
                     .pCommandBuffers(Util.pp.put(0, commands.commandBuffer[currentFrame]!!))
-                    .pSignalSemaphores(lp2.put(0, renderFinishedSemaphore[currentFrame]))
+                    .pSignalSemaphores(lpf.put(0, renderFinishedSemaphore[currentFrame]))
 
                 if (VK13.vkQueueSubmit(
                         device.graphicsQueue,
@@ -268,7 +290,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
                 val presentInfo = VkPresentInfoKHR.calloc(stack)
                     .sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
-                    .pWaitSemaphores(lp2)
+                    .pWaitSemaphores(lpf)
                     .swapchainCount(1)
                     .pSwapchains(Util.lp.put(0, swapChain.swapChain))
                     .pImageIndices(Util.ip.put(0, imageIndex))
@@ -290,17 +312,13 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
     }
 
     fun record(currentFrame: Int, imageIndex: Int) {
-        val currentCommandBuffer = commands.commandBuffer[currentFrame]!!
         MemoryStack.stackPush().use { stack ->
             val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
                 .sType(VK13.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
 
-            if (VK13.vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK13.VK_SUCCESS) {
-                throw IllegalStateException("failed to begin recording command buffer!")
-            }
-
             val clearColor = VkClearValue.calloc(1, stack)
-            clearColor.color()
+                clearColor
+                .color()
                 .float32(0, 0.0f)
                 .float32(1, 0.0f)
                 .float32(2, 0.0f)
@@ -323,8 +341,6 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 .clearValueCount(1)
                 .pClearValues(clearColor)
 
-            VK13.vkCmdBeginRenderPass(currentCommandBuffer, renderPassInfo, VK13.VK_SUBPASS_CONTENTS_INLINE)
-
             val viewport = VkViewport.calloc(1, stack)
                 .x(0.0f)
                 .y(0.0f)
@@ -343,6 +359,11 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                         .height(height)
                 }
 
+            val currentCommandBuffer = commands.commandBuffer[currentFrame]!!
+            if (VK13.vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK13.VK_SUCCESS) {
+                throw IllegalStateException("failed to begin recording command buffer!")
+            }
+            VK13.vkCmdBeginRenderPass(currentCommandBuffer, renderPassInfo, VK13.VK_SUBPASS_CONTENTS_INLINE)
             // map
             VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeLine)
 
@@ -355,8 +376,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
-            var currentDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
-            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, currentDescriptorSet, null)
+            val mapDescriptorSet = stack.longs(descriptorSets.descriptorSets[currentFrame])
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, mapDescriptorSet, null)
 
             VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.mapIndexes.size, 1, 0, 0, 0)
 
@@ -372,8 +393,8 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
-            currentDescriptorSet = stack.longs(objDescriptorSets.descriptorSets[currentFrame])
-            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objPipeline.layout, 0, currentDescriptorSet, null)
+            val objDescriptorSet = stack.longs(objDescriptorSets.descriptorSets[currentFrame])
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objPipeline.layout, 0, objDescriptorSet, null)
 
             VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.getMapObjectsIndexCount(), 1, 0, 0, 0)
 
@@ -388,13 +409,54 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, UIvertexBufferptr, UIoffsets)
             VK13.vkCmdBindIndexBuffer(currentCommandBuffer, UIindexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
 
-            currentDescriptorSet = stack.longs(UIdescriptorSets.descriptorSets[currentFrame])
-            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, UIpipeline.layout, 0, currentDescriptorSet, null)
+            val uiDescriptorSet = stack.longs(UIdescriptorSets.descriptorSets[currentFrame])
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, UIpipeline.layout, 0, uiDescriptorSet, null)
 
             VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.vkUI.getIndexesCount(), 1, 0, 0, 0)
 
+            val viewportMiniMap = VkViewport.calloc(1, stack)
+                .x(0.0f)
+                .y(0.0f)
+                .width((width / 5).toFloat())
+                .height((height / 5).toFloat())
+                .minDepth(0.0f)
+                .maxDepth(1.0f)
+
+            val scissorMiniMap = VkRect2D.calloc(1, stack)
+                .offset {
+                    it.x(0)
+                        .y(0)
+                }
+                .extent {
+                    it.width(width / 5)
+                        .height(height / 5)
+                }
+
+            // minimap
+            VK13.vkCmdNextSubpass(currentCommandBuffer, VK13.VK_SUBPASS_CONTENTS_INLINE);
+            // map
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, miniMapPipeline.graphicsPipeLine)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewportMiniMap)
+            VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissorMiniMap)
+            VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, vertexBufferptr, offsets)
+            VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, miniMapPipeline.layout, 0, mapDescriptorSet, null)
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.mapIndexes.size, 1, 0, 0, 0)
+
+            //objects
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objMiniMapPipeline.graphicsPipeLine)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewportMiniMap)
+            VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissorMiniMap)
+
+            VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, objVertexBufferptr, objOffsets)
+            VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objMiniMapPipeline.layout, 0, objDescriptorSet, null)
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.getMapObjectsIndexCount(), 1, 0, 0, 0)
 
             VK13.vkCmdEndRenderPass(currentCommandBuffer)
+
             if (VK13.vkEndCommandBuffer(currentCommandBuffer) != VK13.VK_SUCCESS) {
                 throw IllegalStateException("failed to record command buffer")
             }

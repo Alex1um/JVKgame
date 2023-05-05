@@ -34,6 +34,7 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation("org.lwjglx", "lwjgl3-awt", `lwjgl3-awtVersion`)
     implementation("org.joml", "joml", jomlVersion)
+    implementation(kotlin("reflect"))
 
 }
 

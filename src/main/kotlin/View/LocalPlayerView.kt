@@ -18,10 +18,10 @@ class LocalPlayerView internal constructor(
     var vkUI = VkUI()
     companion object Consts {
         private const val MAX_SCALE = 0.05f
-        private const val MIN_SCALE = 0.005f
+        private const val MIN_SCALE = 0.0005f
         // Скорость перемещения и масштабирования
         private const val MOVE_SPEED = 50.0f
-        private const val SCALE_SPEED = 0.001f
+        private const val SCALE_SPEED = 0.0001f
     }
 
     inner class Camera(
