@@ -112,9 +112,9 @@ class GraphicsPipelineCreator(
         ldevice: Device,
         basePipeline: GraphicsPipeline,
         vertexProperties: Properties,
+        vararg shaderModules: ShaderModule,
         renderPass: RenderPass? = null,
         descriptorSetLayout: FilledDescriptorSetLayout? = null,
-        vararg shaderModules: ShaderModule,
         subpass: Int = 0,
     ) : GraphicsPipeline {
 
@@ -174,7 +174,8 @@ class GraphicsPipelineCreator(
             .pDepthStencilState(null)
             .subpass(subpass)
             .basePipelineHandle(basePipeline.graphicsPipeLine)
-            .basePipelineIndex(-1)
+            .basePipelineIndex(0)
+            .flags(VK13.VK_PIPELINE_CREATE_DERIVATIVE_BIT)
 
         val layouts = if (descriptorSetLayout != null) {
             stack.longs(descriptorSetLayout.descriptorSetLayout)
