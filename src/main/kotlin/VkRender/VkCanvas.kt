@@ -97,7 +97,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     val miniMapWidth: Int
         get() {
-            return width / 3
+            return height / 3
         }
 
     val miniMapHeight: Int
