@@ -118,7 +118,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         commands = CommandPool(device, physicalDevice)
 
         textures = Images(
-            "build/resources/main/images/Grass1.png",
+            "build/resources/main/images/grass1.png",
         )
         descriptorSetLayout = DescriptorSetLayout(device)
             .addUniforms()
