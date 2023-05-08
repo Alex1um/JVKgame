@@ -30,8 +30,8 @@ public class Unit extends GameObject {
 
     UnitStats stats;
 
-    protected Unit(int textureIndex, UnitStats stats) {
-        super();
+    protected Unit(int textureIndex, float maxHealth, UnitStats stats) {
+        super(maxHealth);
         this.textureIndex = textureIndex;
         this.stats = stats;
     }
@@ -61,6 +61,8 @@ public class Unit extends GameObject {
                     this.setVertex(vx, vy, vertex);
                 }
             }
+            this.setHealthBar();
+            this.setHealth(this.getMaxHealth());
             gameMap.objects.add(this);
         } else {
             throw new Error("Cannot place unit: Tile already occupied " + tilePosition);

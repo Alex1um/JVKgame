@@ -29,7 +29,7 @@ void main() {
     // Добавляем смещение анимации для создания "колыханий"
     float frequency = 4.0;
     float amplitude = 0.05;
-    float randomSeed = fract(sin(dot(vertexPos.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    float randomSeed = rand(vertexPos);
     float swayX = sin(vertexTexCoord.x * frequency + time * 4.0 * swaySpeed + randomSeed) * amplitude;
     float swayY = cos(vertexTexCoord.y * frequency + time * 5.0 * swaySpeed + randomSeed) * amplitude;
     vec2 sway = vec2(swayX, swayY);
@@ -53,9 +53,6 @@ void main() {
     // Задаем итоговый цвет фрагмента
     outColor = mixedColor;
 
-//    outColor = vec4(vec3(sin(gl_FragCoord.xy / 20), 0), 1.0);
-//    outColor = texture(texSampler, vertexTexCoord * 2.);
-//    outColor = fragColor;
 //    outColor = (texture(sampler2D(textures[fragTextureIndex], texSampler), vertexTexCoord) / 2 + fragColor);
     if (fragFlags > 0) {
         outColor.g += .4;

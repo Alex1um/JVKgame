@@ -6,6 +6,7 @@ import GameMap.Tiles.Tile
 import UI.VkFrame
 import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
+import VkRender.GPUObjects.HealthBarVertex
 import java.awt.Point
 
 class LocalPlayerView internal constructor(
@@ -154,5 +155,14 @@ class LocalPlayerView internal constructor(
     fun getMapObjectsIndexCount(): Int {
         return gameMap.objects.size * 6
     }
+
+    var healthBars: List<HealthBarVertex> = listOf()
+        private set
+        get() {
+            if (field.size != gameMap.objects.size * 4) {
+                field = gameMap.objects.flatMap { it.healthBar.flatten() }
+            }
+            return field
+        }
 
 }

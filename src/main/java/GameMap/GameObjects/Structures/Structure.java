@@ -18,7 +18,8 @@ public abstract class Structure extends GameObject {
     public StructureStats stats;
     protected Point blockPosition;
 
-    protected Structure(int textureIndex, StructureStats stats) {
+    protected Structure(int textureIndex, float maxHealth, StructureStats stats) {
+        super(maxHealth);
         this.textureIndex = textureIndex;
         this.stats = stats;
     }
@@ -64,6 +65,8 @@ public abstract class Structure extends GameObject {
                     this.setVertex(vx, vy, vertex);
                 }
             }
+            this.setHealthBar();
+            this.setHealth(this.getMaxHealth());
             gameMap.objects.add(this);
 //            Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);
 //            for (int tileY = 0; tileY < block.getSize(); tileY++) {

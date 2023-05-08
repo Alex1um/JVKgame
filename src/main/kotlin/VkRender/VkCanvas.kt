@@ -6,6 +6,7 @@ import VkRender.Descriptors.DescriptorSetLayout
 import VkRender.Descriptors.DescriptorSets
 import VkRender.Descriptors.FilledDescriptorSetLayout
 import VkRender.GPUObjects.GameMapVertex
+import VkRender.GPUObjects.HealthBarVertex
 import VkRender.GPUObjects.UIVertex
 import VkRender.Pipelines.GraphicsPipeline
 import VkRender.Pipelines.GraphicsPipelineCreator
@@ -82,6 +83,16 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     lateinit var objDescriptorSets: DescriptorSets
     lateinit var miniMapObjDescriptorSets: DescriptorSets
+
+    // healthBars
+    lateinit var healthBarsDescriptorSetLayout: FilledDescriptorSetLayout
+        private set
+    lateinit var healthBarsDescriptorPool: DescriptorPool
+    lateinit var healthBarsPipeline: GraphicsPipeline
+        private set
+    private lateinit var healthBarsVertexBuffer: VertexBuffer
+
+    lateinit var healthBarsDescriptorSets: DescriptorSets
 
     //ui
     lateinit var UIdescriptorSetLayout: FilledDescriptorSetLayout
@@ -197,6 +208,22 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         objVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.mapVertices.size, GameMapVertex.properties)
         objDescriptorSets = DescriptorSets(device, objDescriptorPool, objDescriptorSetLayout, updatingUniformBuffer, objSampler, objTextures)
         miniMapObjDescriptorSets = DescriptorSets(device, objDescriptorPool, objDescriptorSetLayout, miniMapUpdatingUniformBuffer, objSampler, objTextures)
+
+        // healthbar
+
+        healthBarsDescriptorSetLayout = DescriptorSetLayout(device)
+            .addUniforms()
+            .done()
+        healthBarsDescriptorPool = healthBarsDescriptorSetLayout.getPool()
+        healthBarsPipeline = GraphicsPipelineCreator()
+            .fillDefault()
+            .makeViewPortAndScissorDynamicStates()
+            .create(device, renderPass, HealthBarVertex.properties, healthBarsDescriptorSetLayout,
+                VertexShader(device, "build/resources/main/shaders/healthBars.vert.spv"),
+                FragmentShader(device, "build/resources/main/shaders/healthBars.frag.spv"),
+                )
+        healthBarsVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.mapVertices.size, HealthBarVertex.properties)
+        healthBarsDescriptorSets = DescriptorSets(device, healthBarsDescriptorPool, healthBarsDescriptorSetLayout, updatingUniformBuffer)
 
         // ui
         UIdescriptorSetLayout = DescriptorSetLayout(device)
@@ -431,6 +458,23 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
             val objDescriptorSet = stack.longs(objDescriptorSets.descriptorSets[currentFrame])
             VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, objPipeline.layout, 0, objDescriptorSet, null)
+
+            VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.getMapObjectsIndexCount(), 1, 0, 0, 0)
+
+            // HealthBars
+            VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, healthBarsPipeline.graphicsPipeLine)
+
+            VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
+            VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissor)
+
+            val healthBarsVertexBufferptr = stack.longs(objVertexBuffer.buffer.vertexBuffer)
+            val healthBarsOffsets = stack.longs(0)
+            VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, healthBarsVertexBufferptr, healthBarsOffsets)
+
+            VK13.vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer.buffer.vertexBuffer, 0, VK13.VK_INDEX_TYPE_UINT32)
+
+            val healthBarsDescriptorSet = stack.longs(healthBarsDescriptorSets.descriptorSets[currentFrame])
+            VK13.vkCmdBindDescriptorSets(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, healthBarsPipeline.layout, 0, healthBarsDescriptorSet, null)
 
             VK13.vkCmdDrawIndexed(currentCommandBuffer, localPlayerView.getMapObjectsIndexCount(), 1, 0, 0, 0)
 

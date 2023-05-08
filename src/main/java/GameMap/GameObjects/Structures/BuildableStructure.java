@@ -14,8 +14,8 @@ public abstract class BuildableStructure extends Structure {
 
     private final Duration buildTime;
     public final int textureIndexBuilt;
-    protected BuildableStructure(int textureIndexBuilt, int textureIndexBuilding, Duration buildTime, StructureStats stats) {
-        super(textureIndexBuilding, stats);
+    protected BuildableStructure(int textureIndexBuilt, int textureIndexBuilding, Duration buildTime, float maxHealth, StructureStats stats) {
+        super(textureIndexBuilding, maxHealth, stats);
         this.buildTime = buildTime;
         this.textureIndexBuilt = textureIndexBuilt;
     }
