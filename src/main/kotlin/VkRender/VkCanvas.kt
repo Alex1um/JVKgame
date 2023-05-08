@@ -212,7 +212,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         // healthbar
 
         healthBarsDescriptorSetLayout = DescriptorSetLayout(device)
-            .addUniforms()
+            .addUniforms(stageFlags = VK13.VK_SHADER_STAGE_FRAGMENT_BIT or VK13.VK_SHADER_STAGE_VERTEX_BIT)
             .done()
         healthBarsDescriptorPool = healthBarsDescriptorSetLayout.getPool()
         healthBarsPipeline = GraphicsPipelineCreator()
@@ -328,6 +328,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
 //                vertexBuffer.update(vertices)
                 objVertexBuffer.update(localPlayerView.mapObjects)
+                healthBarsVertexBuffer.update(localPlayerView.healthBars)
                 UIvertexBuffer.update(localPlayerView.vkUI.vertixes)
 
                 record(currentFrame, imageIndex)
@@ -467,7 +468,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
             VK13.vkCmdSetViewport(currentCommandBuffer, 0, viewport)
             VK13.vkCmdSetScissor(currentCommandBuffer, 0, scissor)
 
-            val healthBarsVertexBufferptr = stack.longs(objVertexBuffer.buffer.vertexBuffer)
+            val healthBarsVertexBufferptr = stack.longs(healthBarsVertexBuffer.buffer.vertexBuffer)
             val healthBarsOffsets = stack.longs(0)
             VK13.vkCmdBindVertexBuffers(currentCommandBuffer, 0, healthBarsVertexBufferptr, healthBarsOffsets)
 

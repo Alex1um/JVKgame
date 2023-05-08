@@ -65,7 +65,7 @@ public abstract class Structure extends GameObject {
                     this.setVertex(vx, vy, vertex);
                 }
             }
-            this.setHealthBar();
+            this.updateHealthBarPos();
             this.setHealth(this.getMaxHealth());
             gameMap.objects.add(this);
 //            Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);

@@ -1,30 +1,26 @@
 #version 450
 
-layout(location = 0) out vec4 fragColor;
+layout(binding = 0) uniform UniformBufferObject {
+    vec2 offset;
+    float scale;
+    float width;
+    float height;
+} ubo;
 
-layout(location = 0) in float healthPercent;
-layout(location = 1) in float width;
-layout(location = 2) in float height;
+layout(location = 0) out vec4 outColor;
+
+layout(location = 0) in float healthSplitPos;
+layout(location = 1) in float healthPercent;
 
 void main() {
-    // Вычисляем полоски ХП
-    vec4 healthBarColor = vec4(1.0, 0.0, 0.0, 1.0);
-    vec4 healthBarBgColor = vec4(0.2, 0.2, 0.2, 1.0);
-    float healthBarWidth = 20 / width;
-    float healthBarHeight = 5 / height;
-    vec2 healthBarPosition = vec2(0.5 - healthBarWidth / 2.0, 0.1);
-    vec2 healthBarBgPosition = vec2(0.5 - 0.22, 0.1 - healthBarHeight * 2.0);
-    vec2 uv = gl_FragCoord.xy / vec2(width, height);
+    vec4 healthBarColor = vec4(0.2, 1.0, 0.2, 1.0); // зеленый цвет
+    vec4 healthBarBgColor = vec4(0.2, 0.2, 0.2, 1.0); // серый цвет
 
-    // Рисуем полоски ХП
-    if (uv.x > healthBarPosition.x && uv.x < healthBarPosition.x + healthBarWidth &&
-    uv.y > healthBarPosition.y && uv.y < healthBarPosition.y + healthBarHeight) {
-        fragColor = healthBarColor;
-    } else if (uv.x > healthBarBgPosition.x && uv.x < healthBarBgPosition.x + 0.44 &&
-    uv.y > healthBarBgPosition.y && uv.y < healthBarBgPosition.y + healthBarHeight) {
-        fragColor = healthBarBgColor;
+    vec2 screenCoord = gl_FragCoord.xy / vec2(ubo.width, ubo.height);
+
+    if (2 * screenCoord.x - 1 < healthSplitPos * ubo.scale + ubo.offset.x) {
+        outColor = vec4(1 - healthPercent, healthPercent * healthBarColor.g, healthBarColor.ba);
     } else {
         discard;
     }
-    fragColor = vec4(1, 0, 0, 1);
 }

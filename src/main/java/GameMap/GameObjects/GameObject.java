@@ -47,21 +47,26 @@ public abstract class GameObject {
     public void setHealth(float newHealth) {
         health = newHealth;
         float percent = health / newHealth;
+        float splitter = healthBar[0][0].getPos().x() + (healthBar[1][1].getPos().x() - healthBar[0][0].getPos().x()) * percent;
+        healthBar[0][0].setHealthSplitX(splitter);
+        healthBar[0][1].setHealthSplitX(splitter);
+        healthBar[1][0].setHealthSplitX(splitter);
+        healthBar[1][1].setHealthSplitX(splitter);
         healthBar[0][0].setHealthPercent(percent);
         healthBar[0][1].setHealthPercent(percent);
         healthBar[1][0].setHealthPercent(percent);
         healthBar[1][1].setHealthPercent(percent);
     }
 
-    protected void setHealthBar() {
+    protected void updateHealthBarPos() {
         Vector2f tmp = new Vector2f(vertexes[0][0].getPos());
         tmp.y -= Config.healthBarHeight;
         healthBar[0][0].setPos(tmp);
-        tmp = new Vector2f(vertexes[1][0].getPos());
-        tmp.y -= Config.healthBarHeight;
-        healthBar[0][1].setPos(tmp);
-        healthBar[1][0].setPos(vertexes[1][0].getPos());
-        healthBar[1][1].setPos(vertexes[1][1].getPos());
+        Vector2f tmp2 = new Vector2f(vertexes[0][1].getPos());
+        tmp2.y -= Config.healthBarHeight;
+        healthBar[0][1].setPos(tmp2);
+        healthBar[1][0].setPos(vertexes[0][0].getPos());
+        healthBar[1][1].setPos(vertexes[0][1].getPos());
     }
 
     @Nullable
@@ -75,10 +80,10 @@ public abstract class GameObject {
     protected GameObject(float maxHealth) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
-        healthBar[0][0] = new HealthBarVertex(new Vector2f(), this.maxHealth);
-        healthBar[0][1] = new HealthBarVertex(new Vector2f(), this.maxHealth);
-        healthBar[1][0] = new HealthBarVertex(new Vector2f(), this.maxHealth);
-        healthBar[1][1] = new HealthBarVertex(new Vector2f(), this.maxHealth);
+        healthBar[0][0] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
+        healthBar[0][1] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
+        healthBar[1][0] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
+        healthBar[1][1] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
         for (Method method : this.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(AbilityMethod.class)) {
                 if (Abilities == null) {

@@ -11,7 +11,6 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.awt.*;
-import java.lang.annotation.*;
 import java.util.ArrayList;
 
 public class Unit extends GameObject {
@@ -23,6 +22,7 @@ public class Unit extends GameObject {
                 this.getVertex(vx, vy).setPos(newTile.getVertex(vx, vy).getPos());
             }
         }
+        this.updateHealthBarPos();
     }
 
     public Point tilePosition;
@@ -61,7 +61,7 @@ public class Unit extends GameObject {
                     this.setVertex(vx, vy, vertex);
                 }
             }
-            this.setHealthBar();
+            this.updateHealthBarPos();
             this.setHealth(this.getMaxHealth());
             gameMap.objects.add(this);
         } else {

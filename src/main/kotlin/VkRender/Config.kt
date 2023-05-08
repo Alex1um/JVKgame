@@ -6,6 +6,6 @@ object Config {
     const val VALIDATE = true
     const val ENABLE_ANISOTROPY = true;
     const val tileSize = 20;
-    const val healthBarHeight = 5;
+    const val healthBarHeight = 2;
 
 }
