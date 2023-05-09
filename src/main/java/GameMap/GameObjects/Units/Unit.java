@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Units;
 
+import Game.Abilities.AbilityMethod;
 import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
@@ -73,7 +74,10 @@ public class Unit extends GameObject {
     private Action movingAction = null;
     @Nullable
     private Point movingDestination = null;
-    public void move(GameMap gameMap, ArrayList<Action> actions, Point destination) {
+
+    @AbilityMethod(name = "move")
+    public void move(GameMap gameMap, ArrayList<Action> actions, Object... args) {
+        Point destination = (Point) args[0];
         Action newMovingAction = new Action(this::step);
         movingDestination = destination;
         if (movingAction == null) {

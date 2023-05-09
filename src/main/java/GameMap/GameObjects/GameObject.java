@@ -101,7 +101,7 @@ public abstract class GameObject {
         healthBar[0][1] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
         healthBar[1][0] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
         healthBar[1][1] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
-        for (Method method : this.getClass().getDeclaredMethods()) {
+        for (Method method : this.getClass().getMethods()) {
             if (method.isAnnotationPresent(AbilityMethod.class) && isMethodCanBeAbility(method)) {
                 if (Abilities == null) {
                     Abilities = new Hashtable<>();

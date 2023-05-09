@@ -102,8 +102,6 @@ public final class Game {
                         Unit unit = tile.getUnit();
                         if (unit instanceof Master) {
                             unit.getAbilities().get("Summon slave!").use(gameMap, actions);
-                        } else if (unit instanceof Slave) {
-                            unit.getAbilities().get("test").use(gameMap, actions, 1, 2);
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
@@ -116,7 +114,7 @@ public final class Game {
                     } else {
                         for (GameObject obj : selectedObjects) {
                             if (obj instanceof Unit) {
-                                ((Unit) obj).move(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                                obj.getAbilities().get("move").use(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                             }
                         }
                     }
