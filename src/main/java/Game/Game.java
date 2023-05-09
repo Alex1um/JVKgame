@@ -7,6 +7,7 @@ import GameMap.GameObjects.Structures.House;
 import GameMap.GameObjects.Units.Master;
 import GameMap.GameMap;
 import GameMap.GameObjects.Structures.Temple;
+import GameMap.GameObjects.Units.Slave;
 import GameMap.GameObjects.Units.Unit;
 import GameMap.Tiles.Tile;
 import UI.VkFrame;
@@ -100,7 +101,9 @@ public final class Game {
                     if (tile != null) {
                         Unit unit = tile.getUnit();
                         if (unit instanceof Master) {
-                            unit.getAbilities().get(0).use(actions);
+                            unit.getAbilities().get("Summon slave!").use(gameMap, actions);
+                        } else if (unit instanceof Slave) {
+                            unit.getAbilities().get("test").use(gameMap, actions, 1, 2);
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {

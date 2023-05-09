@@ -2,7 +2,9 @@ package GameMap.GameObjects;
 
 import Game.Abilities.Ability;
 import Game.Abilities.AbilityMethod;
+import Game.Abilities.TriConsumer;
 import Game.Actions.Action;
+import GameMap.GameMap;
 import VkRender.Config;
 import VkRender.GPUObjects.GameMapVertex;
 import VkRender.GPUObjects.HealthBarVertex;
@@ -12,6 +14,7 @@ import org.joml.Vector2f;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 public abstract class GameObject {
 
@@ -70,12 +73,26 @@ public abstract class GameObject {
     }
 
     @Nullable
-    public ArrayList<Ability> getAbilities() {
+    public Hashtable<String, Ability> getAbilities() {
         return Abilities;
     }
 
     @Nullable
-    ArrayList<Ability> Abilities = null;
+    Hashtable<String, Ability> Abilities = null;
+
+    private static boolean isMethodCanBeAbility(Method method) {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Class<?> returnType = method.getReturnType();
+
+        if (parameterTypes.length < 2) {
+            return false;
+        }
+        if (!returnType.equals(Void.TYPE)) {
+            return false;
+        }
+        return true;
+
+    }
 
     protected GameObject(float maxHealth) {
         this.maxHealth = maxHealth;
@@ -85,26 +102,37 @@ public abstract class GameObject {
         healthBar[1][0] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
         healthBar[1][1] = new HealthBarVertex(new Vector2f(), this.maxHealth, 1f);
         for (Method method : this.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(AbilityMethod.class)) {
+            if (method.isAnnotationPresent(AbilityMethod.class) && isMethodCanBeAbility(method)) {
                 if (Abilities == null) {
-                    Abilities = new ArrayList<Ability>();
+                    Abilities = new Hashtable<>();
                 }
                 String abilityName = method.getAnnotation(AbilityMethod.class).name();
                 method.setAccessible(true);
-                Abilities.add(
-                        new Ability(
-                                abilityName,
-                                new Action(
-                                        (gameMap, actions) -> {
-                                            try {
-                                                method.invoke(this, gameMap, actions);
-                                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                                throw new RuntimeException(e);
-                                            }
+                if (method.getParameterTypes().length == 2) {
+                    Abilities.put(abilityName,
+                            new Ability(abilityName,
+                                    (gameMap, actions, args) -> {
+                                        try {
+                                            method.invoke(this, gameMap, actions);
+                                        } catch (IllegalAccessException | InvocationTargetException e) {
+                                            throw new RuntimeException(e);
                                         }
-                                )
-                        )
-                );
+                                    }
+                            )
+                    );
+                } else {
+                    Abilities.put(abilityName,
+                            new Ability(abilityName,
+                                    (gameMap, actions, args) -> {
+                                        try {
+                                            method.invoke(this, gameMap, actions, args);
+                                        } catch (IllegalAccessException | InvocationTargetException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }
+                            )
+                    );
+                }
             }
         }
     }

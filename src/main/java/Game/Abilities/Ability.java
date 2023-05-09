@@ -7,15 +7,15 @@ import java.util.ArrayList;
 
 public class Ability {
     String name;
-    Action actionOnUse;
+    TriConsumer<GameMap, ArrayList<Action>> onUseCallback;
 
-    public Ability(String name, Action actionOnUse) {
+    public Ability(String name, TriConsumer<GameMap, ArrayList<Action>> onUseCallback) {
         this.name = name;
-        this.actionOnUse = actionOnUse;
+        this.onUseCallback = onUseCallback;
     }
 
-    public void use(ArrayList<Action> actions) {
-        actions.add(actionOnUse);
+    public void use(GameMap gameMap, ArrayList<Action> actions, Object... args) {
+        this.onUseCallback.accept(gameMap, actions, args);
     }
 
 }

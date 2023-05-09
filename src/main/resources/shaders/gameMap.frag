@@ -17,7 +17,7 @@ float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-void main() {
+void drawGrass() {
 
     float swaySpeed = 0.005;
     // Вычисляем координаты на экране
@@ -53,9 +53,12 @@ void main() {
     // Задаем итоговый цвет фрагмента
     outColor = mixedColor;
 
-//    outColor = (texture(sampler2D(textures[fragTextureIndex], texSampler), vertexTexCoord) / 2 + fragColor);
+    //    outColor = (texture(sampler2D(textures[fragTextureIndex], texSampler), vertexTexCoord) / 2 + fragColor);
     if (fragFlags > 0) {
         outColor.g += .4;
     }
+}
 
+void main() {
+    drawGrass();
 }
