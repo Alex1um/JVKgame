@@ -39,9 +39,7 @@ public class Unit extends GameObject {
 
     public void deploy(GameMap gameMap, ArrayList<Action> actions, Point tilePosition) {
         this.tilePosition = tilePosition;
-        synchronized (actions) {
-            actions.add(new Action((this::create)));
-        }
+        actions.add(new Action((this::create)));
     }
 
     private void create(GameMap gameMap, ArrayList<Action> actions) {

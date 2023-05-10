@@ -26,9 +26,7 @@ public abstract class Structure extends GameObject {
 
     public void build(GameMap gameMap, ArrayList<Action> actions, Point blockPosition) {
         this.blockPosition = blockPosition;
-        synchronized (actions) {
-            actions.add(new Action((this::onBuilt)));
-        }
+        actions.add(new Action((this::onBuilt)));
     }
 
     protected void onBuilt(GameMap gameMap, ArrayList<Action> actions) {

@@ -23,10 +23,8 @@ public abstract class BuildableStructure extends Structure {
     @Override
     public void build(GameMap gameMap, ArrayList<Action> actions, Point blockPosition) {
         this.blockPosition = blockPosition;
-        synchronized (actions) {
-            actions.add(new Action((this::onBuildStart)));
-            actions.add(new DelayedAction(this::onBuilt, buildTime));
-        }
+        actions.add(new Action((this::onBuildStart)));
+        actions.add(new DelayedAction(this::onBuilt, buildTime));
     }
 
     protected void onBuildStart(GameMap gameMap, ArrayList<Action> actions) {
