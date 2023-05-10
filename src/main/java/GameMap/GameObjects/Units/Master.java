@@ -16,7 +16,7 @@ public class Master extends Unit {
     }
 
     @AbilityMethod(name = "Summon slave!")
-    private void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
+    public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
         Point summonPoint = gameMap.getFreeTilePos(this.tilePosition, this.spawnMaxRadius);
         if (summonPoint != null) {
             new Slave().deploy(gameMap, actions, summonPoint);

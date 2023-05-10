@@ -47,14 +47,22 @@ public abstract class GameObject {
         vertexes[y][x] = vertex;
     }
 
-    public void setHealth(float newHealth) {
-        health = newHealth;
-        float percent = health / newHealth;
+    public void updateHealthSplitter() {
+        updateHealthSplitter(health / maxHealth);
+    }
+
+    public void updateHealthSplitter(float percent) {
         float splitter = healthBar[0][0].getPos().x() + (healthBar[1][1].getPos().x() - healthBar[0][0].getPos().x()) * percent;
         healthBar[0][0].setHealthSplitX(splitter);
         healthBar[0][1].setHealthSplitX(splitter);
         healthBar[1][0].setHealthSplitX(splitter);
         healthBar[1][1].setHealthSplitX(splitter);
+    }
+
+    public void setHealth(float newHealth) {
+        health = newHealth;
+        float percent = health / maxHealth;
+        updateHealthSplitter(percent);
         healthBar[0][0].setHealthPercent(percent);
         healthBar[0][1].setHealthPercent(percent);
         healthBar[1][0].setHealthPercent(percent);
@@ -70,6 +78,7 @@ public abstract class GameObject {
         healthBar[0][1].setPos(tmp2);
         healthBar[1][0].setPos(vertexes[0][0].getPos());
         healthBar[1][1].setPos(vertexes[0][1].getPos());
+        updateHealthSplitter();
     }
 
     @Nullable
