@@ -12,7 +12,7 @@ public class Master extends Unit {
     public int spawnMaxRadius = 3;
 
     public Master() {
-        super(0, 50, new UnitStats(50, 5));
+        super(0, 50, new UnitStats(1f));
     }
 
     @AbilityMethod(name = "Summon slave!")

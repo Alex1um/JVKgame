@@ -8,6 +8,6 @@ import java.util.ArrayList;
 
 public class Slave extends Unit {
     public Slave() {
-        super(1, 5, new UnitStats(5, 1));
+        super(1, 5, new UnitStats(.1f));
     }
 }
