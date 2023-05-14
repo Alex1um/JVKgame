@@ -8,6 +8,8 @@ import org.joml.Vector4f;
 import org.joml.Vector2f;
 
 public abstract class Tile {
+
+    public abstract float getMSFactor();
     Matrix4f color;
 
     protected Tile(int textureIndex) {

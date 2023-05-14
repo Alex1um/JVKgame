@@ -7,7 +7,6 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class StructureTile extends Tile {
-
     Structure structure;
     public StructureTile(int tileSizePX, int blockSize, Structure structure, int tileInBlockX, int tileInBlockY) {
         super(structure.textureIndex);
@@ -44,4 +43,8 @@ public class StructureTile extends Tile {
         }
     }
 
+    @Override
+    public float getMSFactor() {
+        return 0f;
+    }
 }

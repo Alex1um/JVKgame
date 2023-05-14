@@ -80,11 +80,11 @@ public class Unit extends GameObject {
         public void createPath(GameMap gameMap, Point start, Point goal) {
             HashMap<Point, Point> cameFrom = new HashMap<>();
             movingDestination = goal;
-            HashMap<Point, Double> costSoFar = new HashMap<>();
-            PriorityQueue<Point> frontier = new PriorityQueue<>(Comparator.comparingDouble(o -> costSoFar.getOrDefault(o, Double.POSITIVE_INFINITY) + heuristic(goal, o)));
+            HashMap<Point, Float> costSoFar = new HashMap<>();
+            PriorityQueue<Point> frontier = new PriorityQueue<>(Comparator.comparingDouble(o -> costSoFar.getOrDefault(o, Float.POSITIVE_INFINITY) + heuristic(goal, o)));
             frontier.offer(start);
             cameFrom.put(start, null);
-            costSoFar.put(start, 0.0);
+            costSoFar.put(start, 0.0f);
 
             while (!frontier.isEmpty()) {
                 Point current = frontier.poll();
@@ -94,7 +94,7 @@ public class Unit extends GameObject {
                 }
 
                 for (Point next : getNeighbors(gameMap, current)) {
-                    double newCost = costSoFar.get(current) + getCost(gameMap, current, next);
+                    float newCost = costSoFar.get(current) + getCost(gameMap, current, next);
                     if (!costSoFar.containsKey(next) || newCost < costSoFar.get(next)) {
                         costSoFar.put(next, newCost);
 //                        double priority = newCost + heuristic(goal, next);
@@ -129,8 +129,20 @@ public class Unit extends GameObject {
 
             return neighbors;
         }
-        private double getCost(GameMap gameMap, Point from, Point to) {
-            return gameMap.isTilePositionFree(to) ? 1d : Double.POSITIVE_INFINITY;
+        private float getCost(GameMap gameMap, Point from, Point to) {
+            if (gameMap.getBlockByTilePos(to).getStructure() != null) {
+                return Float.POSITIVE_INFINITY;
+            }
+            Tile tile = gameMap.getTile(to);
+
+            float fact = 1f / tile.getMSFactor();
+            if (tile.getUnit() != null) {
+//                return Float.POSITIVE_INFINITY;
+                return fact * 2 + 20;
+            } else {
+                return fact;
+            }
+//            return gameMap.isTilePositionFree(to) ? 1 / gameMap.getTile(to).getMSFactor() : ;
         }
         private double heuristic(Point a, Point b) {
             return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -141,7 +153,7 @@ public class Unit extends GameObject {
         public void moveOneStep(GameMap gameMap, ArrayList<Action> newActions) {
             if (hasNextStep())
                 newActions.add(movingAction);
-            traveled += stats.speedTilesPerFrame;
+            traveled += stats.speedTilesPerFrame * gameMap.getTile(tilePosition).getMSFactor();
             for (int i = (int) traveled; i > 0; i--) {
                 Point next = path.get(tilePosition);
                 if (next == null) {

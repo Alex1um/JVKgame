@@ -29,4 +29,9 @@ public class GrassTile extends Tile {
                 0.15f, 0.35f, 0.1f, 1.0f).mul(rng);
         initVertixes(tileSizePX, tileGlobalX, tileGlobalY);
     }
+
+    @Override
+    public float getMSFactor() {
+        return 1f;
+    }
 }
