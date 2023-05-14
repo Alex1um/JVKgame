@@ -47,7 +47,6 @@ public abstract class Structure extends GameObject {
 
         if (canBuild) {
             block.setStructure(this);
-            Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);
             for (int vy = 0; vy < 2; vy++) {
                 for (int vx = 0; vx < 2; vx++) {
                     GameMapVertex vertex = new GameMapVertex(
@@ -55,7 +54,6 @@ public abstract class Structure extends GameObject {
                                     vx * (block.getSize() - 1),
                                     vy * (block.getSize() - 1)
                             ).getVertex(vx, vy).getPos(),
-                            zero,
                             new Vector2f(vx, vy),
                             this.textureIndex,
                             0

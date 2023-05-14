@@ -48,12 +48,10 @@ public class Unit extends GameObject {
         Block block = gameMap.getBlockByTilePos(this.tilePosition);
         if (block.getStructure() == null && tile.getUnit() == null) {
             tile.setUnit(this);
-            Vector4f zero = new Vector4f(0f, 0f, 0f, 1f);
             for (int vy = 0; vy < 2; vy++) {
                 for (int vx = 0; vx < 2; vx++) {
                     GameMapVertex vertex = new GameMapVertex(
                             tile.getVertex(vx, vy).getPos(),
-                            zero,
                             new Vector2f(vx, vy),
                             this.textureIndex,
                             0
@@ -137,12 +135,10 @@ public class Unit extends GameObject {
 
             float fact = 1f / tile.getMSFactor();
             if (tile.getUnit() != null) {
-//                return Float.POSITIVE_INFINITY;
                 return fact * 2 + 20;
             } else {
                 return fact;
             }
-//            return gameMap.isTilePositionFree(to) ? 1 / gameMap.getTile(to).getMSFactor() : ;
         }
         private double heuristic(Point a, Point b) {
             return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);

@@ -24,14 +24,11 @@ public class StructureTile extends Tile {
         // y - row; x - col
         for (int y = 0; y < 2; y++) {
             for (int x = 0; x < 2; x++){
-                Vector4f tileColor = new Vector4f();
-                getVertexColor(y * 2 + x, tileColor);
                 vertexes[y][x] = new GameMapVertex(
                         new Vector2f(
                                 0f,
                                 0f
                         ),
-                        tileColor,
                         new Vector2f(
                                 (float)(tileInBlockX * tileSizePX + x * tileSizePX) / (float)blockSize,
                                 (float)(tileInBlockY * tileSizePX + y * tileSizePX) / (float)blockSize

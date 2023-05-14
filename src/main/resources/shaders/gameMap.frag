@@ -2,13 +2,12 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout(location = 0) in vec4 vertexColor;
-layout(location = 1) in vec2 vertexTexCoord;
-layout(location = 2) flat in int fragTextureIndex;
-layout(location = 3) flat in int fragFlags;
-layout(location = 4) flat in float time;
-layout(location = 5) in vec2 viewportResolution;
-layout(location = 6) in vec2 vertexPos;
+layout(location = 0) in vec2 vertexTexCoord;
+layout(location = 1) flat in int fragTextureIndex;
+layout(location = 2) flat in int fragFlags;
+layout(location = 3) flat in float time;
+layout(location = 4) in vec2 viewportResolution;
+layout(location = 5) in vec2 vertexPos;
 
 layout(binding = 1) uniform sampler texSampler;
 layout(binding = 2) uniform texture2D textures[1];
@@ -40,7 +39,9 @@ void drawGrass() {
     // Получаем цвет из текстуры, с прозрачностью учитывающей альфа-канал
     // и комбинируем со цветом вершины
     vec4 texColor = texture(sampler2D(textures[fragTextureIndex], texSampler), texCoord);
-    vec4 mixedColor = mix(vertexColor, texColor, texColor.a);
+//    vec4 mixedColor = mix(vertexColor, texColor, texColor.a);
+//    vec4 mixedColor = mix(texColor, texColor, texColor.a);
+    vec4 mixedColor = texColor;
 
     // Находим расстояние до центра клетки
     float distanceToCenter = length(screenCoord - vec2(0.5));

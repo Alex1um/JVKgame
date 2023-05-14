@@ -13,6 +13,10 @@ import java.util.ArrayList;
 
 public class GameMap {
 
+    public Block[][] getBlocks() {
+        return blocks;
+    }
+
     Block[][] blocks;
     int mapSizeBlocks;
     int blockSizeTiles;
@@ -106,7 +110,7 @@ public class GameMap {
         Random r = new Random(seed);
         for (int blockY = 0; blockY < mapSizeBlocks; blockY++) {
             for (int blockX = 0; blockX < mapSizeBlocks; blockX++) {
-                blocks[blockY][blockX] = new GrassBlock(r, blockSizeTiles, Config.tileSize, blockX, blockY);
+                blocks[blockY][blockX] = new GrassBlock(blockSizeTiles);
             }
         }
     }

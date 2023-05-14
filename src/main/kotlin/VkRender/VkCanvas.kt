@@ -165,7 +165,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         updatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 6L)
         miniMapUpdatingUniformBuffer = UpdatingUniformBuffer(device, physicalDevice, Config.MAX_FRAMES_IN_FLIGHT, Float.SIZE_BYTES * 3L)
 
-        vertexBuffer = VertexStagingBuffer(device, physicalDevice, localPlayerView.mapVertices, commands)
+        vertexBuffer = VertexStagingBuffer(device, physicalDevice, localPlayerView.gameMapView.vertices, commands)
         indexBuffer = IndexBuffer(device, physicalDevice, commands, localPlayerView.mapIndexes)
         descriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, updatingUniformBuffer, sampler, textures)
         miniMapDescriptorSets = DescriptorSets(device, descriptorPool, descriptorSetLayout, miniMapUpdatingUniformBuffer, sampler, textures)
@@ -205,7 +205,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         objTextures.init(device, physicalDevice, commands)
         objSampler = Sampler(device, physicalDevice)
 
-        objVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.mapVertices.size, GameMapVertex.properties)
+        objVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.gameMapView.vertices.size, GameMapVertex.properties)
         objDescriptorSets = DescriptorSets(device, objDescriptorPool, objDescriptorSetLayout, updatingUniformBuffer, objSampler, objTextures)
         miniMapObjDescriptorSets = DescriptorSets(device, objDescriptorPool, objDescriptorSetLayout, miniMapUpdatingUniformBuffer, objSampler, objTextures)
 
@@ -222,7 +222,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 VertexShader(device, "build/resources/main/shaders/healthBars.vert.spv"),
                 FragmentShader(device, "build/resources/main/shaders/healthBars.frag.spv"),
                 )
-        healthBarsVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.mapVertices.size, HealthBarVertex.properties)
+        healthBarsVertexBuffer = VertexBuffer(device, physicalDevice, localPlayerView.gameMapView.vertices.size, HealthBarVertex.properties)
         healthBarsDescriptorSets = DescriptorSets(device, healthBarsDescriptorPool, healthBarsDescriptorSetLayout, updatingUniformBuffer)
 
         // ui
