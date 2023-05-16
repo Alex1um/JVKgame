@@ -19,15 +19,13 @@ public class Unit extends GameObject {
 
     public void setTilePosition(Tile newTile, Point tilePosition) {
         this.tilePosition = tilePosition;
-        for (int vy = 0; vy < 2; vy++) {
-            for (int vx = 0; vx < 2; vx++) {
-                this.getVertex(vx, vy).setPos(newTile.getVertex(vx, vy).getPos());
-            }
-        }
-        this.updateHealthBarPos();
     }
 
-    public Point tilePosition;
+    public Point getTilePosition() {
+        return tilePosition;
+    }
+
+    private Point tilePosition;
     final int textureIndex;
 
     UnitStats stats;
@@ -48,19 +46,6 @@ public class Unit extends GameObject {
         Block block = gameMap.getBlockByTilePos(this.tilePosition);
         if (block.getStructure() == null && tile.getUnit() == null) {
             tile.setUnit(this);
-            for (int vy = 0; vy < 2; vy++) {
-                for (int vx = 0; vx < 2; vx++) {
-                    GameMapVertex vertex = new GameMapVertex(
-                            tile.getVertex(vx, vy).getPos(),
-                            new Vector2f(vx, vy),
-                            this.textureIndex,
-                            0
-                    );
-                    this.setVertex(vx, vy, vertex);
-                }
-            }
-            this.updateHealthBarPos();
-            this.setHealth(this.getMaxHealth());
             gameMap.objects.add(this);
         } else {
             throw new Error("Cannot place unit: Tile already occupied " + tilePosition);

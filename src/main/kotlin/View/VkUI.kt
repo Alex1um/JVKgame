@@ -37,28 +37,6 @@ class VkUI {
         }
     }
 
-    fun setBlockhighlight(block: Block?, highlight: Int) {
-        if (block != null) {
-            for (tileArr in block.tiles) {
-                for (tile in tileArr) {
-                    for (i in 0..1) {
-                        for (j in 0..1) {
-                            tile.getVertex(i, j).isHighlighted = highlight
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun setObjecthighlight(obj: GameObject, highlight: Int) {
-        for (vertexRow in obj.vertexes) {
-            for (vertex in vertexRow) {
-                vertex.isHighlighted = highlight;
-            }
-        }
-    }
-
     fun getIndexesCount(): Int {
         return indexes.size
     }

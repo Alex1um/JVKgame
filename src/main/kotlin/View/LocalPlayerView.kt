@@ -55,15 +55,17 @@ class LocalPlayerView internal constructor(
     val mapIndexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
         get;
 
-    val mapVertices: MutableList<GameMapVertex> = mutableListOf();
-
     val camera = Camera(cameraInitPoint.x.toFloat(), cameraInitPoint.y.toFloat())
 
     val gameMapView = GameMapView(gameMap)
+    val gameObjectsView = GameObjectsView(gameMap)
 
     init {
-//        generateMapVertices(gameMap)
         generateMapIndexes(gameMap)
+    }
+
+    fun getMapObjectsIndexCount(): Int {
+        return gameMap.objects.size * 6
     }
 
     private fun generateMapIndexes(map: GameMap): MutableList<Int> {
@@ -110,27 +112,5 @@ class LocalPlayerView internal constructor(
         val mousePos = getTilePositionByClick(clickPos)
         return gameMap.getBlockPosByTilePos(mousePos)
     }
-
-    var mapObjects: List<GameMapVertex> = listOf()
-        private set
-        get() {
-            if (field.size != gameMap.objects.size * 4) {
-                field = gameMap.objects.flatMap { it.vertexes.flatten() }
-            }
-            return field
-        }
-
-    fun getMapObjectsIndexCount(): Int {
-        return gameMap.objects.size * 6
-    }
-
-    var healthBars: List<HealthBarVertex> = listOf()
-        private set
-        get() {
-            if (field.size != gameMap.objects.size * 4) {
-                field = gameMap.objects.flatMap { it.healthBar.flatten() }
-            }
-            return field
-        }
 
 }

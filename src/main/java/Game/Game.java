@@ -30,7 +30,8 @@ public final class Game {
 
         private void deselect() {
             for (GameObject obj : selectedObjects) {
-                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
+                localPlayerView.getGameObjectsView().getObjectView(obj).highlight(0);
+//                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
             }
             selectedObjects.clear();
         }
@@ -63,7 +64,8 @@ public final class Game {
                         if (tile != null && tile.getUnit() != null) {
                             Unit unit = tile.getUnit();
                             selectedObjects.add(unit);
-                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
+                            localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
+//                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
                         }
                     }
                 }
@@ -91,7 +93,8 @@ public final class Game {
                         Unit unit = tile.getUnit();
                         if (unit != null) {
                             selectedObjects.add(unit);
-                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
+                            localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
+//                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
                         } else {
                             deselect();
                         }
@@ -173,15 +176,6 @@ public final class Game {
         }
     }
 
-    public final class BlockHightlightAdapter extends MouseAdapter {
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            if (e != null) {
-                Block block = localPlayerView.getBlockByMouseClick(e.getPoint());
-                localPlayerView.getVkUI().setBlockhighlight(block, 1);
-            }
-        }
-    }
     // View
     private LocalPlayerView localPlayerView;
 
@@ -206,7 +200,6 @@ public final class Game {
         UI.getCanvas().addMouseMotionListener(moveAdapter);
         UI.getCanvas().addMouseListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
-        UI.getCanvas().addMouseMotionListener(new BlockHightlightAdapter());
         UI.start();
 //        try {
 //            TimeUnit.SECONDS.sleep(1);

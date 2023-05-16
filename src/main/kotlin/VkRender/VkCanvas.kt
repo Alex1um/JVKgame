@@ -327,8 +327,9 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
                 )
 
 //                vertexBuffer.update(vertices)
-                objVertexBuffer.update(localPlayerView.mapObjects)
-                healthBarsVertexBuffer.update(localPlayerView.healthBars)
+                localPlayerView.gameObjectsView.update()
+                objVertexBuffer.update(localPlayerView.gameObjectsView.vertexes)
+                healthBarsVertexBuffer.update(localPlayerView.gameObjectsView.vertexesHealthBar)
                 UIvertexBuffer.update(localPlayerView.vkUI.vertixes)
 
                 record(currentFrame, imageIndex)

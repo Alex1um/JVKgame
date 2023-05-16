@@ -150,4 +150,17 @@ public class GameMap {
     public boolean isTilePositionFree(Point pos) {
         return this.getBlockByTilePos(pos).getStructure() == null && this.getTile(pos).getUnit() == null;
     }
+    public boolean isBlockPositionFree(Point pos) {
+        Block block = this.getBlockByTilePos(pos);
+        if (block.getStructure() != null) {
+            return false;
+        } else {
+            for (Tile[] tileRow : block.getTiles()) {
+                for (Tile tile : tileRow) {
+                    if (tile.getUnit() != null) return false;
+                }
+            }
+        }
+        return true;
+    }
 }

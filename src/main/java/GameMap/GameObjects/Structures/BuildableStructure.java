@@ -13,11 +13,9 @@ import java.util.ArrayList;
 public abstract class BuildableStructure extends Structure {
 
     private final Duration buildTime;
-    public final int textureIndexBuilt;
-    protected BuildableStructure(int textureIndexBuilt, int textureIndexBuilding, Duration buildTime, float maxHealth, StructureStats stats) {
-        super(textureIndexBuilding, maxHealth, stats);
+    protected BuildableStructure(Duration buildTime, float maxHealth, StructureStats stats) {
+        super(maxHealth, stats);
         this.buildTime = buildTime;
-        this.textureIndexBuilt = textureIndexBuilt;
     }
 
     @Override
@@ -33,13 +31,6 @@ public abstract class BuildableStructure extends Structure {
 
     @Override
     protected void onBuilt(GameMap gameMap, ArrayList<Action> actions) {
-
-        for (int vy = 0; vy < 2; vy++) {
-            for (int vx = 0; vx < 2; vx++) {
-                GameMapVertex vertex = this.getVertex(vx, vy);
-                vertex.setTextureIndex(this.textureIndexBuilt);
-            }
-        }
 
     }
 }
