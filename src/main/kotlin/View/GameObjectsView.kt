@@ -5,12 +5,13 @@ import GameMap.GameObjects.GameObject
 import GameMap.GameObjects.Structures.House
 import GameMap.GameObjects.Structures.Structure
 import GameMap.GameObjects.Structures.Temple
-import GameMap.GameObjects.Units.Master
-import GameMap.GameObjects.Units.Slave
+import GameMap.GameObjects.Units.Necromancer
+import GameMap.GameObjects.Units.Zombie
 import GameMap.GameObjects.Units.Unit
 import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
 import VkRender.GPUObjects.HealthBarVertex
+import VkRender.TextureTable
 import org.joml.Vector2f
 
 class GameObjectsView(private val gameMap: GameMap) {
@@ -78,10 +79,10 @@ class GameObjectsView(private val gameMap: GameMap) {
         }
 
         val textureIndex = when (gameObject) {
-            is Master -> 0
-            is Slave -> 1
-            is Temple -> 0
-            is House -> 1
+            is Necromancer -> TextureTable.units["necromancer"]!!
+            is Zombie -> TextureTable.units["zombie"]!!
+            is Temple -> TextureTable.structures["temple"]!!
+            is House -> TextureTable.structures[if (gameObject.isBuilt) "house" else "houseConstructing"]!!
             else -> -1
         }
 

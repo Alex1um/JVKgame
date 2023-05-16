@@ -5,6 +5,7 @@ import GameMap.Tiles.GrassTile
 import GameMap.Tiles.Tile
 import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
+import VkRender.TextureTable
 import org.joml.Vector2f
 import org.joml.Vector4f
 
@@ -13,7 +14,7 @@ class GameMapView(gameMap: GameMap) {
     inner class TileView(tile: Tile, tileSizePX: Int, tileX: Int, tileY: Int) {
 
         val textureIndex = when (tile) {
-            is GrassTile -> 0
+            is GrassTile -> TextureTable.tiles["grass"]!!
             else -> -1
         }
 

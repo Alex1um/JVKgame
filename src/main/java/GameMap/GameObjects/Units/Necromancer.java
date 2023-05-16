@@ -7,11 +7,11 @@ import Game.Abilities.AbilityMethod;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class Master extends Unit {
+public class Necromancer extends Unit {
 
     public int spawnMaxRadius = 3;
 
-    public Master() {
+    public Necromancer() {
         super(0, 50, new UnitStats(1f));
     }
 
@@ -19,7 +19,7 @@ public class Master extends Unit {
     public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
         Point summonPoint = gameMap.getFreeTilePos(this.getTilePosition(), this.spawnMaxRadius);
         if (summonPoint != null) {
-            new Slave().deploy(gameMap, actions, summonPoint);
+            new Zombie().deploy(gameMap, actions, summonPoint);
         } else {
             throw new Exception("cannot summon unit: no empty space");
         }

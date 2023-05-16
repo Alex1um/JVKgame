@@ -24,7 +24,7 @@ class TextureImage(val ldevice: Device, physicalDevice: PhysicalDevice, commands
             val pheight = stack.ints(0)
             val pchannels = stack.ints(0)
             val pixels: ByteBuffer = stbi_load(path, pwidth, pheight, pchannels, STBI_rgb_alpha)
-                ?: throw IllegalStateException("Cannot load image")
+                ?: throw IllegalStateException("Cannot load image $path")
             width = pwidth[0]
             height = pheight[0]
             size = pwidth[0] * pheight[0] * /*always 4 due to stbi_rgb_alpha*/ 4

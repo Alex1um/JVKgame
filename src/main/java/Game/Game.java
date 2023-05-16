@@ -1,13 +1,9 @@
 package Game;
 
 import Game.Actions.Action;
-import GameMap.Blocks.Block;
 import GameMap.GameObjects.GameObject;
-import GameMap.GameObjects.Structures.House;
-import GameMap.GameObjects.Units.Master;
+import GameMap.GameObjects.Units.Necromancer;
 import GameMap.GameMap;
-import GameMap.GameObjects.Structures.Temple;
-import GameMap.GameObjects.Units.Slave;
 import GameMap.GameObjects.Units.Unit;
 import GameMap.Tiles.Tile;
 import UI.VkFrame;
@@ -103,14 +99,14 @@ public final class Game {
                     Tile tile = localPlayerView.getTileByMouseClick(e.getPoint());
                     if (tile != null) {
                         Unit unit = tile.getUnit();
-                        if (unit instanceof Master) {
+                        if (unit instanceof Necromancer) {
                             unit.getAbilities().get("Summon slave!").use(gameMap, actions);
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
                     if (selectedObjects.isEmpty()) {
                         try {
-                            new Master().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                            new Necromancer().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                         } catch (Throwable err) {
                             System.out.println("Cannot deploy unit house: " + err);
                         }

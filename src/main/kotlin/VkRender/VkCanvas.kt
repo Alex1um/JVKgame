@@ -16,6 +16,7 @@ import VkRender.Surfaces.NativeSurface
 import VkRender.Surfaces.Surface
 import VkRender.Sync.Fences
 import VkRender.Sync.Semaphores
+import VkRender.TextureTable.getPaths
 import VkRender.Textures.Images
 import VkRender.Textures.Sampler
 import VkRender.buffers.IndexBuffer
@@ -129,7 +130,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
         commands = CommandPool(device, physicalDevice)
 
         textures = Images(
-            "build/resources/main/images/grass1.png",
+            *TextureTable.tiles.getPaths(),
         )
         descriptorSetLayout = DescriptorSetLayout(device)
             .addUniforms()
@@ -172,11 +173,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
         //objects
         objTextures = Images(
-            "build/resources/main/images/Structure1.png",
-            "build/resources/main/images/house.png",
-            "build/resources/main/images/house2.png",
-            "build/resources/main/images/temple2.png",
-            "build/resources/main/images/temple-destroyed.png",
+            *TextureTable.objects.getPaths(),
         )
         objDescriptorSetLayout = DescriptorSetLayout(device)
             .addUniforms()
