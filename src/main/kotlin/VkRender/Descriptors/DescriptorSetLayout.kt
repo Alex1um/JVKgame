@@ -7,7 +7,6 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding
 import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo
-import java.io.Closeable
 import java.nio.LongBuffer
 
 class DescriptorSetLayout(val ldevice: Device) {

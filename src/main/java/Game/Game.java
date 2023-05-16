@@ -173,11 +173,11 @@ public final class Game {
     }
 
     // View
-    private LocalPlayerView localPlayerView;
+    private final LocalPlayerView localPlayerView;
 
-    private UI.VkFrame UI;
+    private final UI.VkFrame UI;
     private final GameMap gameMap;
-    private ArrayList<Action> actions = new ArrayList<>();
+    private final ArrayList<Action> actions = new ArrayList<>();
 
     public Game(int mapSize, int blockSize) {
         gameMap = new GameMap(mapSize, blockSize);
@@ -197,19 +197,12 @@ public final class Game {
         UI.getCanvas().addMouseListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
         UI.start();
-//        try {
-//            TimeUnit.SECONDS.sleep(1);
-//            run();
-//        } catch (Throwable t) {
-//            System.out.println("Error: " + t.getMessage());
-//        }
     }
 
     void run() {
 
-        ArrayList<Action> newActions = new ArrayList<Action>();
+        ArrayList<Action> newActions = new ArrayList<>();
 
-        newActions.clear();
         for (Action action : actions) {
             try {
                 action.execute(gameMap, newActions);

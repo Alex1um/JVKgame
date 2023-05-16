@@ -24,7 +24,6 @@ public abstract class GameObject {
     }
     float maxHealth;
 
-    Point tilePosition;
     @Nullable
     public Hashtable<String, Ability> getAbilities() {
         return Abilities;
@@ -40,10 +39,7 @@ public abstract class GameObject {
         if (parameterTypes.length < 2) {
             return false;
         }
-        if (!returnType.equals(Void.TYPE)) {
-            return false;
-        }
-        return true;
+        return returnType.equals(Void.TYPE);
 
     }
 

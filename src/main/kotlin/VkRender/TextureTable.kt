@@ -2,8 +2,8 @@ package VkRender
 
 object TextureTable {
 
-    private val imagesPath = "build/resources/main/images/"
-    private val imagesExt = ".png"
+    private const val imagesPath = "build/resources/main/images/"
+    private const val imagesExt = ".png"
 
     val units = listOf(
         "worker",

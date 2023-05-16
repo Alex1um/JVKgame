@@ -1,12 +1,13 @@
 package VkRender
 
+import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import java.io.Closeable
 
 class SingleTimeCommands(val stack: MemoryStack, val ldevide: Device, val commands: CommandPool) : Closeable {
 
-    val pCommandBuffer = stack.pointers(0)
+    val pCommandBuffer: PointerBuffer = stack.pointers(0)
     val commandBuffer: VkCommandBuffer
 
     init {

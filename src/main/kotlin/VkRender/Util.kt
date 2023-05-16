@@ -1,9 +1,7 @@
 package VkRender
 
 import org.lwjgl.PointerBuffer
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
-import org.lwjgl.vulkan.*
 import java.io.Closeable
 import java.io.File
 import java.nio.IntBuffer
@@ -19,7 +17,7 @@ class Util : Closeable {
         ip = MemoryUtil.memAllocInt(1)
         lp = MemoryUtil.memAllocLong(1)
         pp = MemoryUtil.memAllocPointer(1)
-        ptrBuf = MemoryUtil.memAllocPointer(64);
+        ptrBuf = MemoryUtil.memAllocPointer(64)
     }
 
     companion object {
@@ -34,7 +32,7 @@ class Util : Closeable {
             }
         }
 
-        fun findMemoryType(stack: MemoryStack, physicalDevice: PhysicalDevice, typeFilter: Int, properties: Int): Int {
+        fun findMemoryType(physicalDevice: PhysicalDevice, typeFilter: Int, properties: Int): Int {
             for ((i: Int, t) in physicalDevice.memoryProperties.memoryTypes().withIndex()) {
                 if ((typeFilter and (1 shl i)) != 0 && (t.propertyFlags() and properties) == properties) {
                     return i

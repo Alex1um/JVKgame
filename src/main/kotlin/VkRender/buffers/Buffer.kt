@@ -42,7 +42,6 @@ class Buffer(
                 .allocationSize(memoryRequirements.size())
                 .memoryTypeIndex(
                     Util.findMemoryType(
-                        stack,
                         physicalDevice,
                         memoryRequirements.memoryTypeBits(),
                         properties

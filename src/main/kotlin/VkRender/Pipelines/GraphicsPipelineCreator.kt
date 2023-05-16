@@ -8,14 +8,11 @@ import VkRender.ShaderModule.ShaderModule
 import VkRender.Util
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
-import kotlin.Lazy
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 
-class GraphicsPipelineCreator(
-) {
+class GraphicsPipelineCreator {
 
-    private val stack: MemoryStack = MemoryStack.stackPush();
+    private val stack: MemoryStack = MemoryStack.stackPush()
 
     val inputAssembly: VkPipelineInputAssemblyStateCreateInfo by lazy {
         VkPipelineInputAssemblyStateCreateInfo.calloc(stack)

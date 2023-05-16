@@ -19,22 +19,19 @@ class SwapChain(
     ) : Closeable {
 
     var swapChain: Long = 0
-        private set;
+        private set
     private var imageCount: Int = 0
     private lateinit var swapChainImages: LongBuffer
     private var swapChainImageFormat: Int = 0
     lateinit var swapChainImageViews: Array<ImageView>
     private lateinit var swapChainExtent: VkExtent2D
     lateinit var swapChainFramebuffers: LongArray
-        private set;
-    lateinit var swapChainMiniMapFramebuffers: LongArray
-        private set;
-
+        private set
     init {
-        Create(width, height)
+        create(width, height)
     }
 
-    private fun Create(width: Int,
+    private fun create(width: Int,
                        height: Int,
                        ) {
         with(Util) {
@@ -73,15 +70,15 @@ class SwapChain(
                     .clipped(true)
                     .oldSwapchain(swapChain)
 
-                if (pdevice.graphicsFamily != pdevice.presentFamily) {
+                createInfo = if (pdevice.graphicsFamily != pdevice.presentFamily) {
                     val b = IntBuffer.allocate(2)
                     b.put(pdevice.graphicsFamily)
                     b.put(pdevice.presentFamily)
-                    createInfo = createInfo.imageSharingMode(VK13.VK_SHARING_MODE_CONCURRENT)
+                    createInfo.imageSharingMode(VK13.VK_SHARING_MODE_CONCURRENT)
                         .queueFamilyIndexCount(2)
                         .pQueueFamilyIndices(b)
                 } else {
-                    createInfo = createInfo.imageSharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE)
+                    createInfo.imageSharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE)
                         .queueFamilyIndexCount(0)
                         .pQueueFamilyIndices(null)
                 }
@@ -133,7 +130,7 @@ class SwapChain(
         VK13.vkDeviceWaitIdle(ldevice.device)
 
         val old = swapChain
-        Create(newWidth, newHeight)
+        create(newWidth, newHeight)
         KHRSwapchain.vkDestroySwapchainKHR(ldevice.device, old, null)
 
     }

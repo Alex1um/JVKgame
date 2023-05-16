@@ -10,15 +10,13 @@ import javax.swing.Timer
 
 class VkFrame(title: String, localPlayerView: LocalPlayerView, FPS: Int = 60, loopFunction: () -> Unit) {
 
-    public val frame: JFrame
-    private val vkInstance: Instance
+    val frame: JFrame
+    private val vkInstance: Instance = Instance("RTS")
     val canvas: VkCanvas
 
-    val loopTimer: Timer;
+    val loopTimer: Timer
 
     init {
-
-        vkInstance = Instance("RTS")
 
         frame = JFrame(title)
         frame.layout = BorderLayout()

@@ -1,7 +1,6 @@
 package VkRender
 
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.glfw.GLFWVulkan
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform

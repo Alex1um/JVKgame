@@ -29,9 +29,9 @@ import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.awt.AWTVKCanvas
 import org.lwjgl.vulkan.awt.VKData
 import java.awt.Graphics
-import java.awt.event.*
+import java.awt.event.ComponentEvent
+import java.awt.event.ComponentListener
 import java.io.Closeable
-import java.time.LocalDate
 import kotlin.system.measureNanoTime
 
 class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerView) : AWTVKCanvas(VKData().also { it.instance = instance.instance }), ComponentListener,
@@ -107,7 +107,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     private var currentFrame = 0
     private var framebufferResized = false
-    private var ticksSinceStart = 0;
+    private var ticksSinceStart = 0
 
     val miniMapWidth: Int
         get() {
@@ -275,7 +275,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
     override fun paintVK() {
 
-        val time = measureNanoTime {
+        measureNanoTime {
             MemoryStack.stackPush().use { stack ->
 
                 VK13.vkWaitForFences(device.device, inFlightFences[currentFrame], true, Long.MAX_VALUE)
@@ -513,7 +513,7 @@ class VkCanvas(private val instance: Instance, val localPlayerView: LocalPlayerV
 
             // minimap
 
-            VK13.vkCmdNextSubpass(currentCommandBuffer, VK13.VK_SUBPASS_CONTENTS_INLINE);
+            VK13.vkCmdNextSubpass(currentCommandBuffer, VK13.VK_SUBPASS_CONTENTS_INLINE)
             // map
             VK13.vkCmdBindPipeline(currentCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, miniMapPipeline.graphicsPipeLine)
 

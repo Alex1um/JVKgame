@@ -54,8 +54,7 @@ class Image(stack: MemoryStack,
             .allocationSize(requirements.size())
             .memoryTypeIndex(
                 Util.findMemoryType(
-                    stack, physicalDevice, requirements.memoryTypeBits(),
-                    properties
+                    physicalDevice, requirements.memoryTypeBits(), properties
                 )
             )
 

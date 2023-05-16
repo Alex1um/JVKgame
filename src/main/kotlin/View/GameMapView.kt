@@ -7,13 +7,12 @@ import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
 import VkRender.TextureTable
 import org.joml.Vector2f
-import org.joml.Vector4f
 
 class GameMapView(gameMap: GameMap) {
 
     inner class TileView(tile: Tile, tileSizePX: Int, tileX: Int, tileY: Int) {
 
-        val textureIndex = when (tile) {
+        private val textureIndex = when (tile) {
             is GrassTile -> TextureTable.tiles["grass"]!!
             else -> -1
         }
@@ -35,7 +34,7 @@ class GameMapView(gameMap: GameMap) {
         fun highlight(mode: Int = 1) {
             for (y in 0..1) {
                 for (x in 0..1) {
-                    vertexes[y][x]!!.isHighlighted = mode
+                    vertexes[y][x].isHighlighted = mode
                 }
             }
         }
@@ -43,7 +42,7 @@ class GameMapView(gameMap: GameMap) {
         fun unhighlight() {
             for (y in 0..1) {
                 for (x in 0..1) {
-                    vertexes[y][x]!!.isHighlighted = 0
+                    vertexes[y][x].isHighlighted = 0
                 }
             }
         }
@@ -55,8 +54,8 @@ class GameMapView(gameMap: GameMap) {
         }
     }
 
-    val vertices = tileViews.flatMap { it ->
-            it.flatMap { view ->
+    val vertices = tileViews.flatMap {
+        it.flatMap { view ->
                 view.vertexes.flatten()
             }
         }

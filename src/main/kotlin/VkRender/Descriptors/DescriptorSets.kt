@@ -13,6 +13,7 @@ import org.lwjgl.vulkan.VkDescriptorImageInfo
 import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 import java.io.Closeable
+import java.nio.LongBuffer
 
 class DescriptorSets(
     val ldevice: Device,
@@ -23,7 +24,7 @@ class DescriptorSets(
     textures: Images? = null,
 ) : Closeable {
 
-    val descriptorSets = MemoryUtil.memCallocLong(Config.MAX_FRAMES_IN_FLIGHT)
+    val descriptorSets: LongBuffer = MemoryUtil.memCallocLong(Config.MAX_FRAMES_IN_FLIGHT)
     init {
         MemoryStack.stackPush().use { stack ->
 

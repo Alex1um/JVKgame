@@ -1,6 +1,5 @@
 package VkRender
 
-import VkRender.Surfaces.Surface
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import java.io.Closeable
@@ -10,8 +9,8 @@ class Device(physicalDevice: PhysicalDevice): Closeable {
     val device: VkDevice
     val graphicsQueue: VkQueue
     val memoryProperties: VkPhysicalDeviceMemoryProperties
-    val graphicsFamily: Int;
-    val presentFamily: Int;
+    val graphicsFamily: Int
+    val presentFamily: Int
 
     init {
         with(Util) {

@@ -5,8 +5,6 @@ import GameMap.GameMap
 import GameMap.Tiles.Tile
 import UI.VkFrame
 import VkRender.Config
-import VkRender.GPUObjects.GameMapVertex
-import VkRender.GPUObjects.HealthBarVertex
 import java.awt.Point
 
 class LocalPlayerView internal constructor(
@@ -14,7 +12,7 @@ class LocalPlayerView internal constructor(
     cameraInitPoint: Point,
 ) {
 
-    var UI: VkFrame? = null;
+    var UI: VkFrame? = null
 
     var vkUI = VkUI()
     companion object Consts {
@@ -53,7 +51,6 @@ class LocalPlayerView internal constructor(
     }
 
     val mapIndexes = mutableListOf(gameMap.fullTileSize * gameMap.fullTileSize)
-        get;
 
     val camera = Camera(cameraInitPoint.x.toFloat(), cameraInitPoint.y.toFloat())
 
@@ -81,7 +78,7 @@ class LocalPlayerView internal constructor(
                         mapIndexes.add(tileIndex + 3)
                         mapIndexes.add(tileIndex + 2)
                         mapIndexes.add(tileIndex)
-                        tileIndex += 4;
+                        tileIndex += 4
                     }
                 }
             }
@@ -96,7 +93,7 @@ class LocalPlayerView internal constructor(
             .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
         val mousePosY: Float = (clickPos.y
             .toFloat() - canvasHeightHalved - camera.offsetY * canvasHeightHalved) / (canvasHeightHalved * camera.scale) / Config.tileSize.toFloat()
-        return Point(mousePosX.toInt(), mousePosY.toInt());
+        return Point(mousePosX.toInt(), mousePosY.toInt())
     }
     fun getTileByMouseClick(clickPos: Point): Tile? {
         val mousePos = getTilePositionByClick(clickPos)

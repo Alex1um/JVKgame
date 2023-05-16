@@ -11,7 +11,7 @@ open class GPUObjectAutoProperties(vararg structure: Any) {
 //    val FORMATS: Array<Int>,
 
     init {
-        var sizeOf: Int = 0
+        var sizeOf = 0
         val offsets: MutableList<Int> = mutableListOf()
         val formats: MutableList<Int> = mutableListOf()
 

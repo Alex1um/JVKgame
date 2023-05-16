@@ -2,8 +2,6 @@ package VkRender.GPUObjects
 
 import org.joml.Vector2f
 import org.joml.Vector2fc
-import org.joml.Vector4f
-import org.joml.Vector4fc
 import java.nio.ByteBuffer
 
 class GameMapVertex(

@@ -170,7 +170,7 @@ class GameObjectsView(private val gameMap: GameMap) {
     }
 
     var gameObjectsView = listOf<GameObjectView>()
-        private set;
+        private set
 
     fun getObjectView(gameObject: GameObject): GameObjectView? {
         return gameObjectsView.find { it.gameObject == gameObject }
@@ -179,12 +179,12 @@ class GameObjectsView(private val gameMap: GameMap) {
     var vertexes = gameObjectsView.flatMap { view ->
         view.vertexes.flatten()
     }
-        private set;
+        private set
 
     var vertexesHealthBar = gameObjectsView.flatMap {  view ->
         view.healthbarView.vertexes.flatten()
     }
-        private set;
+        private set
 
     fun update() {
         if (gameObjectsView.size != gameMap.objects.size) {

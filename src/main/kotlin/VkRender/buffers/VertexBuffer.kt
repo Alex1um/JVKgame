@@ -1,9 +1,9 @@
 package VkRender.buffers
 
-import VkRender.*
+import VkRender.Device
 import VkRender.GPUObjects.GPUObject
-import VkRender.GPUObjects.GameMapVertex
 import VkRender.GPUObjects.Properties
+import VkRender.PhysicalDevice
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
 import java.io.Closeable

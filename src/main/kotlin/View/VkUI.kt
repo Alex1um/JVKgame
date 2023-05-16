@@ -1,7 +1,5 @@
 package View
 
-import GameMap.Blocks.Block
-import GameMap.GameObjects.GameObject
 import VkRender.GPUObjects.UIVertex
 import org.joml.Vector2f
 import org.joml.Vector4f
@@ -10,7 +8,7 @@ import kotlin.math.sign
 
 class VkUI {
 
-    private val selectionRect: List<UIVertex> = listOf<UIVertex>(
+    private val selectionRect: List<UIVertex> = listOf(
         UIVertex(Vector2f(0f, 0f), Vector4f(0f, 1f, 0f, .5f)),
         UIVertex(Vector2f(0f, 0f), Vector4f(0f, 1f, 0f, .5f)),
         UIVertex(Vector2f(0f, 0f), Vector4f(0f, 1f, 0f, .5f)),
@@ -19,7 +17,7 @@ class VkUI {
 
     val vertixes: List<UIVertex> = selectionRect
 
-    val indexes = listOf<Int>(
+    val indexes = listOf(
         0, 1, 3, 3, 2, 0,
     )
 
