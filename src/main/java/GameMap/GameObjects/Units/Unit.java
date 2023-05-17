@@ -5,13 +5,13 @@ import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
 import GameMap.GameObjects.GameObject;
+import GameMap.GameObjects.Structures.Structure;
 import GameMap.Tiles.Tile;
-import VkRender.GPUObjects.GameMapVertex;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector2f;
-import org.joml.Vector4f;
 
 import java.awt.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
@@ -26,13 +26,10 @@ public class Unit extends GameObject {
     }
 
     private Point tilePosition;
-    final int textureIndex;
-
     UnitStats stats;
 
-    protected Unit(int textureIndex, float maxHealth, UnitStats stats) {
+    protected Unit(float maxHealth, UnitStats stats) {
         super(maxHealth);
-        this.textureIndex = textureIndex;
         this.stats = stats;
     }
 
@@ -131,9 +128,8 @@ public class Unit extends GameObject {
         public boolean hasNextStep() {
             return tilePosition != movingDestination && path.get(tilePosition) != null;
         }
-        public void moveOneStep(GameMap gameMap, ArrayList<Action> newActions) {
-            if (hasNextStep())
-                newActions.add(movingAction);
+
+        public void moveOneStep(GameMap gameMap) {
             traveled += stats.speedTilesPerFrame * gameMap.getTile(tilePosition).getMSFactor();
             for (int i = (int) traveled; i > 0; i--) {
                 Point next = path.get(tilePosition);
@@ -150,21 +146,123 @@ public class Unit extends GameObject {
             }
             traveled %= 1;
         }
+        public void moveActionF(GameMap gameMap, ArrayList<Action> newActions) {
+            moveOneStep(gameMap);
+            if (hasNextStep())
+                newActions.add(currentAction);
+        }
     }
 
     private final AStarPathfinding2 pathing = new AStarPathfinding2();
 
+    private final Action movingAction = new Action(pathing::moveActionF);
+    private final Action attackAction = new Action(this::attackMove);
     @Nullable
-    private Action movingAction = new Action(pathing::moveOneStep);
-
+    private Action currentAction = null;
     @AbilityMethod(name = "move")
     public void move(GameMap gameMap, ArrayList<Action> actions, Object... args) {
         Point destination = (Point) args[0];
+        currentAction = movingAction;
         if (!pathing.hasNextStep()) {
             pathing.createPath(gameMap, tilePosition, destination);
-            actions.add(movingAction);
+            actions.add(currentAction);
         } else {
             pathing.createPath(gameMap, tilePosition, destination);
+        }
+    }
+
+    @Nullable
+    private GameObject attackObject = null;
+
+    @Nullable
+    private Instant attackStartTime = null;
+
+    private void attackMove(GameMap gameMap, ArrayList<Action> actions) {
+        if (attackObject == null) {
+            GameObject newTarget = scanForTargets(gameMap);
+            if (newTarget != null) {
+                attackObject = newTarget;
+            } else if (pathing.hasNextStep()) {
+                pathing.moveOneStep(gameMap);
+            }
+        } else {
+            Point targetPos = null;
+
+            if (attackObject instanceof Unit) {
+                targetPos = ((Unit) attackObject).tilePosition;
+            } else if (attackObject instanceof Structure) {
+                targetPos = new Point(((Structure) attackObject).getBlockPosition());
+                targetPos.x *= gameMap.getBlockSizeTiles();
+                targetPos.y *= gameMap.getBlockSizeTiles();
+                if (tilePosition.y > targetPos.y) {
+                    targetPos.y += gameMap.getBlockSizeTiles();
+                }
+                if (tilePosition.x > targetPos.x) {
+                    targetPos.x += gameMap.getBlockSizeTiles();
+                }
+            }
+            int distance = Math.abs(tilePosition.y - targetPos.y) + Math.abs(tilePosition.x - targetPos.x);
+            if (distance > stats.attackRange) {
+                if (!targetPos.equals(pathing.movingDestination)) {
+                    pathing.createPath(gameMap, tilePosition, targetPos);
+                }
+                pathing.moveOneStep(gameMap);
+            } else {
+//                if (Duration.between(attackStartTime))
+                if (attackStartTime == null) {
+                    attackStartTime = Instant.now();
+                } else if (Duration.between(attackStartTime, Instant.now()).getNano() > stats.attackInterval.getNano()) {
+                    attackStartTime.plus(stats.attackInterval);
+                    attackObject.damage(stats.attack);
+                    if (attackObject.getHealth() <= 0) {
+                        gameMap.objects.remove(attackObject);
+                        if (attackObject instanceof Unit) {
+                            gameMap.getTile(((Unit) attackObject).tilePosition).setUnit(null);
+                        } else if (attackObject instanceof Structure) {
+                            gameMap.getBlockByTilePos(((Structure) attackObject).getBlockPosition()).setStructure(null);
+                        }
+                    }
+                }
+            }
+        }
+        actions.add(currentAction);
+    }
+
+    @Nullable
+    private GameObject scanForTargets(GameMap gameMap) {
+        for (int distance = 1; distance <= stats.attackScanRange; distance++) {
+            for (int i = -distance; i <= distance; i++) {
+                for (int j = -distance; j <= distance; j++) {
+                    // Пропускаем клетки, которые находятся дальше, чем distance
+                    if (Math.abs(i) + Math.abs(j) > distance || i == 0 && j == 0) {
+                        continue;
+                    }
+                    int x = tilePosition.x + i;
+                    int y = tilePosition.y + j;
+                    Unit unit = gameMap.getTile(x, y).getUnit();
+                    if (unit != null) {
+                        return unit;
+                    }
+                    Structure structure = gameMap.getBlockByTilePos(x, y).getStructure();
+                    if (structure != null) {
+                        return structure;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @AbilityMethod(name = "attack")
+    public void attack(GameMap gameMap, ArrayList<Action> actions, Object... args) {
+        Point target = args.length > 0 ? (Point) args[0] : null;
+        currentAction = attackAction;
+        if (!pathing.hasNextStep()) {
+            actions.add(currentAction);
+        }
+        if (target != null) {
+            pathing.createPath(gameMap, tilePosition, target);
+            attackObject = gameMap.getObjectByTilePos(target);
         }
     }
 

@@ -2,6 +2,7 @@ package View
 
 import GameMap.Blocks.Block
 import GameMap.GameMap
+import GameMap.GameObjects.GameObject
 import GameMap.Tiles.Tile
 import UI.VkFrame
 import VkRender.Config
@@ -108,6 +109,10 @@ class LocalPlayerView internal constructor(
     fun getBlockPositionByClick(clickPos: Point): Point {
         val mousePos = getTilePositionByClick(clickPos)
         return gameMap.getBlockPosByTilePos(mousePos)
+    }
+
+    fun getObjectByMouseClick(clickPos: Point): GameObject? {
+        return gameMap.getObjectByTilePos(getTilePositionByClick(clickPos))
     }
 
 }

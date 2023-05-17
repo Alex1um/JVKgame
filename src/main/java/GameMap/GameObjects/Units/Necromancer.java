@@ -5,6 +5,7 @@ import GameMap.GameMap;
 import Game.Abilities.AbilityMethod;
 
 import java.awt.*;
+import java.time.Duration;
 import java.util.ArrayList;
 
 public class Necromancer extends Unit {
@@ -12,7 +13,7 @@ public class Necromancer extends Unit {
     public int spawnMaxRadius = 3;
 
     public Necromancer() {
-        super(0, 50, new UnitStats(1f));
+        super(500, new UnitStats(.1f, 5, 1, Duration.ofMillis(1500), 1));
     }
 
     @AbilityMethod(name = "Summon slave!")

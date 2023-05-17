@@ -2,6 +2,7 @@ package GameMap.GameObjects;
 
 import Game.Abilities.Ability;
 import Game.Abilities.AbilityMethod;
+import GameMap.GameMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -21,6 +22,10 @@ public abstract class GameObject {
     }
     protected void setHealth(float newHealth) {
         health = newHealth;
+    }
+
+    public void damage(float dmg) {
+        health -= dmg;
     }
     float maxHealth;
 

@@ -3,8 +3,9 @@ package GameMap;
 import GameMap.Blocks.Block;
 import GameMap.Blocks.GrassBlock;
 import GameMap.GameObjects.GameObject;
+import GameMap.GameObjects.Structures.Structure;
+import GameMap.GameObjects.Units.Unit;
 import GameMap.Tiles.Tile;
-import VkRender.Config;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Random;
 
@@ -16,7 +17,6 @@ public class GameMap {
     public Block[][] getBlocks() {
         return blocks;
     }
-
     Block[][] blocks;
     int mapSizeBlocks;
     int blockSizeTiles;
@@ -162,5 +162,18 @@ public class GameMap {
             }
         }
         return true;
+    }
+
+    @Nullable
+    public GameObject getObjectByTilePos(int tileX, int tileY) {
+        Unit unit = getTile(tileX, tileY).getUnit();
+        if (unit != null) return unit;
+        Structure struct = getBlockByTilePos(tileX, tileY).getStructure();
+        return struct;
+    }
+
+    @Nullable
+    public GameObject getObjectByTilePos(Point pos) {
+        return getObjectByTilePos(pos.x, pos.y);
     }
 }

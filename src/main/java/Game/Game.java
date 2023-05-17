@@ -9,13 +9,19 @@ import GameMap.Tiles.Tile;
 import UI.VkFrame;
 import View.LocalPlayerView;
 
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public final class Game {
+
+    enum ClickModifier {
+        None,
+        Attack,
+    }
+    ClickModifier clickModifier = ClickModifier.None;
 
     public final class CameraSelectionAdapter extends MouseAdapter {
 
@@ -27,7 +33,6 @@ public final class Game {
         private void deselect() {
             for (GameObject obj : selectedObjects) {
                 localPlayerView.getGameObjectsView().getObjectView(obj).highlight(0);
-//                localPlayerView.getVkUI().setObjecthighlight(obj, 0);
             }
             selectedObjects.clear();
         }
@@ -35,9 +40,8 @@ public final class Game {
         @Override
         public void mousePressed(MouseEvent e) {
             super.mousePressed(e);
-            if (e != null && e.getButton() == MouseEvent.BUTTON1) {
+            if (e != null && e.getButton() == MouseEvent.BUTTON1 && clickModifier == ClickModifier.None) {
                 isSelecting = true;
-                deselect();
                 selectionStartingPoint = e.getPoint();
             }
         }
@@ -46,6 +50,7 @@ public final class Game {
         public void mouseReleased(MouseEvent e) {
             super.mouseReleased(e);
             if (isSelecting && e != null) {
+                deselect();
                 isSelecting = false;
                 localPlayerView.getVkUI().select(e.getPoint(), e.getPoint());
 
@@ -61,7 +66,6 @@ public final class Game {
                             Unit unit = tile.getUnit();
                             selectedObjects.add(unit);
                             localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
-//                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
                         }
                     }
                 }
@@ -84,18 +88,32 @@ public final class Game {
             super.mouseClicked(e);
             if (e != null) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    Tile tile = localPlayerView.getTileByMouseClick(e.getPoint());
-                    if (tile != null) {
-                        Unit unit = tile.getUnit();
-                        if (unit != null) {
-                            selectedObjects.add(unit);
-                            localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
-//                            localPlayerView.getVkUI().setObjecthighlight(unit, 1);
-                        } else {
+                    switch (clickModifier) {
+                        case Attack: {
+                            if (!selectedObjects.isEmpty()) {
+                                Point attackPoint = localPlayerView.getTilePositionByClick(e.getPoint());
+                                for (GameObject obj : selectedObjects) {
+                                    if (obj instanceof Unit) {
+                                        obj.getAbilities().get("attack").use(gameMap, actions, attackPoint);
+                                    }
+                                }
+                                clickModifier = ClickModifier.None;
+                                break;
+                            }
+                            clickModifier = ClickModifier.None;
+                        }
+                        case None: {
                             deselect();
+                            GameObject obj = localPlayerView.getObjectByMouseClick(e.getPoint());
+                            if (obj != null) {
+                                selectedObjects.add(obj);
+                                localPlayerView.getGameObjectsView().getObjectView(obj).highlight(1);
+                            }
+                            break;
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON2) {
+                    // TODO: remove
                     Tile tile = localPlayerView.getTileByMouseClick(e.getPoint());
                     if (tile != null) {
                         Unit unit = tile.getUnit();
@@ -104,17 +122,19 @@ public final class Game {
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    if (selectedObjects.isEmpty()) {
-                        try {
-                            new Necromancer().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
-                        } catch (Throwable err) {
-                            System.out.println("Cannot deploy unit house: " + err);
-                        }
-                    } else {
+                    if (!selectedObjects.isEmpty()) {
+                        clickModifier = ClickModifier.None;
                         for (GameObject obj : selectedObjects) {
                             if (obj instanceof Unit) {
                                 obj.getAbilities().get("move").use(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                             }
+                        }
+                    } else {
+                        // TODO: remove
+                        try {
+                            new Necromancer().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                        } catch (Throwable err) {
+                            System.out.println("Cannot deploy unit house: " + err);
                         }
                     }
                 }
@@ -150,7 +170,6 @@ public final class Game {
                 Point delta = new Point(e.getPoint().x - moveStartPoint.x, e.getPoint().y - moveStartPoint.y);
                 localPlayerView.getCamera().move(delta.x, delta.y);
                 moveStartPoint = e.getPoint();
-//                UI.repaintCanvas();
             }
         }
 
@@ -172,6 +191,26 @@ public final class Game {
         }
     }
 
+    public final class ModifierListener implements KeyListener {
+
+        @Override
+        public void keyTyped(KeyEvent keyEvent) {
+            if (keyEvent.getKeyChar() == 'a') {
+                clickModifier = ClickModifier.Attack;
+                System.out.println("A pressed");
+            }
+        }
+
+        @Override
+        public void keyPressed(KeyEvent keyEvent) {
+
+        }
+
+        @Override
+        public void keyReleased(KeyEvent keyEvent) {
+
+        }
+    }
     // View
     private final LocalPlayerView localPlayerView;
 
@@ -196,6 +235,7 @@ public final class Game {
         UI.getCanvas().addMouseMotionListener(moveAdapter);
         UI.getCanvas().addMouseListener(selectionAdapter);
         UI.getCanvas().addMouseMotionListener(selectionAdapter);
+        UI.getCanvas().addKeyListener(new ModifierListener());
         UI.start();
     }
 
