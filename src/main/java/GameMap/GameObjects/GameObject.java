@@ -1,7 +1,6 @@
 package GameMap.GameObjects;
 
-import Game.Abilities.Ability;
-import Game.Abilities.AbilityMethod;
+import Game.Abilities.*;
 import GameMap.GameMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,30 +51,32 @@ public abstract class GameObject {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         for (Method method : this.getClass().getMethods()) {
-            if (method.isAnnotationPresent(AbilityMethod.class) && isMethodCanBeAbility(method)) {
+            if (isMethodCanBeAbility(method)) {
                 if (Abilities == null) {
                     Abilities = new Hashtable<>();
                 }
-                String abilityName = method.getAnnotation(AbilityMethod.class).name();
-                method.setAccessible(true);
-                if (method.getParameterTypes().length == 2) {
+                if (method.isAnnotationPresent(TargetAbilityMethod.class)) {
+                    String abilityName = method.getAnnotation(TargetAbilityMethod.class).name();
+                    method.setAccessible(true);
                     Abilities.put(abilityName,
-                            new Ability(abilityName,
-                                    (gameMap, actions, args) -> {
+                            new TargetAbility(abilityName,
+                                    (gameMap, actions, target) -> {
                                         try {
-                                            method.invoke(this, gameMap, actions);
+                                            method.invoke(this, gameMap, actions, target);
                                         } catch (IllegalAccessException | InvocationTargetException e) {
                                             throw new RuntimeException(e);
                                         }
                                     }
                             )
                     );
-                } else {
+                } else if (method.isAnnotationPresent(BasicAbilityMethod.class)) {
+                    String abilityName = method.getAnnotation(BasicAbilityMethod.class).name();
+                    method.setAccessible(true);
                     Abilities.put(abilityName,
-                            new Ability(abilityName,
-                                    (gameMap, actions, args) -> {
+                            new BasicAbility(abilityName,
+                                    (gameMap, actions) -> {
                                         try {
-                                            method.invoke(this, gameMap, actions, args);
+                                            method.invoke(this, gameMap, actions);
                                         } catch (IllegalAccessException | InvocationTargetException e) {
                                             throw new RuntimeException(e);
                                         }

@@ -4,8 +4,8 @@ import GameMap.Blocks.Block
 import GameMap.GameMap
 import GameMap.GameObjects.GameObject
 import GameMap.Tiles.Tile
-import UI.VkFrame
 import VkRender.Config
+import VkRender.VkCanvas
 import java.awt.Point
 
 class LocalPlayerView internal constructor(
@@ -13,7 +13,7 @@ class LocalPlayerView internal constructor(
     cameraInitPoint: Point,
 ) {
 
-    var UI: VkFrame? = null
+    lateinit var canvas: VkCanvas
 
     var vkUI = VkUI()
     companion object Consts {
@@ -88,8 +88,8 @@ class LocalPlayerView internal constructor(
     }
 
     fun getTilePositionByClick(clickPos: Point): Point {
-        val canvasWidthHalved = (UI!!.canvas.width / 2).toFloat()
-        val canvasHeightHalved = (UI!!.canvas.height / 2).toFloat()
+        val canvasWidthHalved = (canvas.width / 2).toFloat()
+        val canvasHeightHalved = (canvas.height / 2).toFloat()
         val mousePosX: Float = (clickPos.x
             .toFloat() - canvasWidthHalved - camera.offsetX * canvasWidthHalved) / (canvasWidthHalved * camera.scale) / Config.tileSize.toFloat()
         val mousePosY: Float = (clickPos.y

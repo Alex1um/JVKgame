@@ -4,6 +4,8 @@
     <bytecodeTargetLevel target="1.8">
       <module name="testGame.src.main.game.main" target="17" />
       <module name="testGame.src.main.game.test" target="17" />
+      <module name="testGame.src.main.UI.main" target="17" />
+      <module name="testGame.src.main.UI.test" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>

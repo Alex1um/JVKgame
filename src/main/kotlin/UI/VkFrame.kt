@@ -1,14 +1,20 @@
 package UI
 
+import Frame.VkGame
+import GameMap.GameObjects.GameObject
 import View.LocalPlayerView
 import VkRender.Instance
 import javax.swing.JFrame
 import VkRender.VkCanvas
-import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.event.ActionListener
 import javax.swing.Timer
 
-class VkFrame(title: String, localPlayerView: LocalPlayerView, FPS: Int = 60, loopFunction: () -> Unit) {
+class VkFrame(
+    localPlayerView: LocalPlayerView,
+    FPS: Int = 60,
+    loopFunction: () -> Unit,
+    skillButtonsListener: ActionListener,
+    ) {
 
     val frame: JFrame
     private val vkInstance: Instance = Instance("RTS")
@@ -16,15 +22,25 @@ class VkFrame(title: String, localPlayerView: LocalPlayerView, FPS: Int = 60, lo
 
     val loopTimer: Timer
 
+    val content: VkGame
+
     init {
 
-        frame = JFrame(title)
-        frame.layout = BorderLayout()
+        frame = JFrame("RTS")
 
-        frame.preferredSize = Dimension(800, 800)
+//        frame.layout = BorderLayout()
+
+//        frame.preferredSize = Dimension(800, 800)
 
         canvas = VkCanvas(vkInstance, localPlayerView)
-        frame.add(canvas, BorderLayout.CENTER)
+        content = VkGame(canvas)
+        content.createUIComponents()
+
+        content.skillTable.forEach { it.addActionListener(skillButtonsListener) }
+
+        frame.contentPane = content.mainPanel
+
+//        frame.add(canvas, BorderLayout.CENTER)
 
         loopTimer = Timer(1000 / FPS) {
             loopFunction()
@@ -39,6 +55,24 @@ class VkFrame(title: String, localPlayerView: LocalPlayerView, FPS: Int = 60, lo
 
     fun repaintCanvas() {
         canvas.repaint()
+    }
+
+    fun selectObject(obj: GameObject) {
+        if (obj.abilities != null) {
+            var i = 0
+            for ((key, ability) in obj.abilities!!) {
+                content.skillTable[i].isEnabled = true
+                content.skillTable[i].text = key
+                content.skillTable[i].toolTipText = key
+                content.skillTable[i].name = key
+                i++
+            }
+            for (j in i..15) {
+                content.skillTable[j].isEnabled = false
+            }
+        } else {
+            content.skillTable.forEach { it.isEnabled = false }
+        }
     }
 
 }

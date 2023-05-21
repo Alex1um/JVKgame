@@ -1,5 +1,8 @@
 package Game;
 
+import Game.Abilities.Ability;
+import Game.Abilities.BasicAbility;
+import Game.Abilities.TargetAbility;
 import Game.Actions.Action;
 import GameMap.GameObjects.GameObject;
 import GameMap.GameObjects.Units.Necromancer;
@@ -7,28 +10,27 @@ import GameMap.GameMap;
 import GameMap.GameObjects.Units.Unit;
 import GameMap.Tiles.Tile;
 import UI.VkFrame;
+import Frame.VkGame;
 import View.LocalPlayerView;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicButtonListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
 public final class Game {
 
-    enum ClickModifier {
-        None,
-        Attack,
-    }
-    ClickModifier clickModifier = ClickModifier.None;
+    @Nullable
+    String clickModifier = null;
+
+    private final ArrayList<GameObject> selectedObjects = new ArrayList<>();
 
     public final class CameraSelectionAdapter extends MouseAdapter {
 
         private boolean isSelecting = false;
         private Point selectionStartingPoint = null;
         private final Rectangle selectionRect = new Rectangle();
-        private final ArrayList<GameObject> selectedObjects = new ArrayList<>();
 
         private void deselect() {
             for (GameObject obj : selectedObjects) {
@@ -40,7 +42,7 @@ public final class Game {
         @Override
         public void mousePressed(MouseEvent e) {
             super.mousePressed(e);
-            if (e != null && e.getButton() == MouseEvent.BUTTON1 && clickModifier == ClickModifier.None) {
+            if (e != null && e.getButton() == MouseEvent.BUTTON1 && clickModifier == null) {
                 isSelecting = true;
                 selectionStartingPoint = e.getPoint();
             }
@@ -65,6 +67,7 @@ public final class Game {
                         if (tile != null && tile.getUnit() != null) {
                             Unit unit = tile.getUnit();
                             selectedObjects.add(unit);
+                            UI.selectObject(unit);
                             localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
                         }
                     }
@@ -88,28 +91,25 @@ public final class Game {
             super.mouseClicked(e);
             if (e != null) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    switch (clickModifier) {
-                        case Attack: {
-                            if (!selectedObjects.isEmpty()) {
-                                Point attackPoint = localPlayerView.getTilePositionByClick(e.getPoint());
-                                for (GameObject obj : selectedObjects) {
-                                    if (obj instanceof Unit) {
-                                        obj.getAbilities().get("attack").use(gameMap, actions, attackPoint);
+                    if (clickModifier != null) {
+                        if (!selectedObjects.isEmpty()) {
+                            Point attackPoint = localPlayerView.getTilePositionByClick(e.getPoint());
+                            for (GameObject obj : selectedObjects) {
+                                if (obj instanceof Unit) {
+                                    if (obj.getAbilities() != null && obj.getAbilities().get(clickModifier) != null) {
+                                        obj.getAbilities().get(clickModifier).use(gameMap, actions, attackPoint);
                                     }
                                 }
-                                clickModifier = ClickModifier.None;
-                                break;
                             }
-                            clickModifier = ClickModifier.None;
                         }
-                        case None: {
-                            deselect();
-                            GameObject obj = localPlayerView.getObjectByMouseClick(e.getPoint());
-                            if (obj != null) {
-                                selectedObjects.add(obj);
-                                localPlayerView.getGameObjectsView().getObjectView(obj).highlight(1);
-                            }
-                            break;
+                        clickModifier = null;
+                    } else {
+                        deselect();
+                        GameObject obj = localPlayerView.getObjectByMouseClick(e.getPoint());
+                        if (obj != null) {
+                            selectedObjects.add(obj);
+                            UI.selectObject(obj);
+                            localPlayerView.getGameObjectsView().getObjectView(obj).highlight(1);
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON2) {
@@ -123,7 +123,7 @@ public final class Game {
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
                     if (!selectedObjects.isEmpty()) {
-                        clickModifier = ClickModifier.None;
+                        clickModifier = null;
                         for (GameObject obj : selectedObjects) {
                             if (obj instanceof Unit) {
                                 obj.getAbilities().get("move").use(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
@@ -196,7 +196,7 @@ public final class Game {
         @Override
         public void keyTyped(KeyEvent keyEvent) {
             if (keyEvent.getKeyChar() == 'a') {
-                clickModifier = ClickModifier.Attack;
+                clickModifier = "attack";
                 System.out.println("A pressed");
             }
         }
@@ -211,10 +211,30 @@ public final class Game {
 
         }
     }
+
+    public final class SkillTablebutton implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            if (actionEvent != null) {
+                String abilityName = ((JButton)actionEvent.getSource()).getName();
+                for (GameObject selectedObject : selectedObjects) {
+                    Ability ability = selectedObject.getAbilities().get(abilityName);
+                    if (ability != null) {
+                        if (ability instanceof TargetAbility) {
+                            clickModifier = abilityName;
+                        } else if (ability instanceof BasicAbility) {
+                            ability.use(gameMap, actions);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // View
     private final LocalPlayerView localPlayerView;
 
-    private final UI.VkFrame UI;
+    private final VkFrame UI;
     private final GameMap gameMap;
     private final ArrayList<Action> actions = new ArrayList<>();
 
@@ -222,12 +242,13 @@ public final class Game {
         gameMap = new GameMap(mapSize, blockSize);
         gameMap.generateRandomMap(System.currentTimeMillis());
 
+        ActionListener abilityButtonsListener = new SkillTablebutton();
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));
-        UI = new VkFrame("new game", localPlayerView, 60, () -> {
+        UI = new VkFrame(localPlayerView, 60, () -> {
             run();
             return null;
-        });
-        localPlayerView.setUI(UI);
+        }, abilityButtonsListener);
+        localPlayerView.setCanvas(UI.getCanvas());
         MouseAdapter moveAdapter = new CameraMoveAdapter();
         MouseAdapter selectionAdapter = new CameraSelectionAdapter();
         UI.getCanvas().addMouseWheelListener(new CameraZoomAdapter());

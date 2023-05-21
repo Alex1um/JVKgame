@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Units;
 
+import Game.Abilities.BasicAbilityMethod;
 import Game.Actions.Action;
 import GameMap.GameMap;
 import Game.Abilities.AbilityMethod;
@@ -16,7 +17,7 @@ public class Necromancer extends Unit {
         super(500, new UnitStats(.1f, 5, 1, Duration.ofMillis(1500), 1));
     }
 
-    @AbilityMethod(name = "Summon slave!")
+    @BasicAbilityMethod(name = "Summon slave!")
     public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
         Point summonPoint = gameMap.getFreeTilePos(this.getTilePosition(), this.spawnMaxRadius);
         if (summonPoint != null) {
