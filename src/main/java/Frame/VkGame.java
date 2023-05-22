@@ -1,6 +1,5 @@
 package Frame;
 
-import GameMap.GameObjects.GameObject;
 import VkRender.VkCanvas;
 
 import javax.swing.*;
@@ -15,8 +14,8 @@ public class VkGame {
     public JPanel chatPanel;
     public JTextArea chatArea;
     public JTextField chatInput;
-    public JPanel statPanel;
-    public JPanel skillPanel;
+    public JPanel SkillPanel;
+    public JPanel selectedStatPanel;
     public JButton button1;
     public JButton button2;
     public JButton button3;
@@ -33,6 +32,9 @@ public class VkGame {
     public JButton button14;
     public JButton button15;
     public JButton button16;
+    public JProgressBar hpBar;
+    public JList selectedUnitList;
+    public JLabel unitName;
 
     public JButton[] skillTable;
 
@@ -104,11 +106,11 @@ public class VkGame {
         chatPanel.add(chatArea, BorderLayout.CENTER);
         chatInput = new JTextField();
         chatPanel.add(chatInput, BorderLayout.SOUTH);
-        statPanel = new JPanel();
-        statPanel.setLayout(new GridBagLayout());
-        statPanel.setMinimumSize(new Dimension(200, 92));
-        statPanel.setPreferredSize(new Dimension(200, 0));
-        bottomBar.add(statPanel, BorderLayout.EAST);
+        SkillPanel = new JPanel();
+        SkillPanel.setLayout(new GridBagLayout());
+        SkillPanel.setMinimumSize(new Dimension(200, 92));
+        SkillPanel.setPreferredSize(new Dimension(200, 0));
+        bottomBar.add(SkillPanel, BorderLayout.EAST);
         button1 = new JButton();
         button1.setEnabled(false);
         button1.setPreferredSize(new Dimension(50, 50));
@@ -120,7 +122,7 @@ public class VkGame {
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button1, gbc);
+        SkillPanel.add(button1, gbc);
         button2 = new JButton();
         button2.setEnabled(false);
         button2.setPreferredSize(new Dimension(50, 50));
@@ -129,7 +131,7 @@ public class VkGame {
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button2, gbc);
+        SkillPanel.add(button2, gbc);
         button3 = new JButton();
         button3.setEnabled(false);
         button3.setPreferredSize(new Dimension(50, 50));
@@ -138,7 +140,7 @@ public class VkGame {
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button3, gbc);
+        SkillPanel.add(button3, gbc);
         button4 = new JButton();
         button4.setEnabled(false);
         button4.setPreferredSize(new Dimension(50, 50));
@@ -147,7 +149,7 @@ public class VkGame {
         gbc.gridx = 3;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button4, gbc);
+        SkillPanel.add(button4, gbc);
         button5 = new JButton();
         button5.setEnabled(false);
         button5.setPreferredSize(new Dimension(50, 50));
@@ -156,7 +158,7 @@ public class VkGame {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button5, gbc);
+        SkillPanel.add(button5, gbc);
         button6 = new JButton();
         button6.setEnabled(false);
         button6.setPreferredSize(new Dimension(50, 50));
@@ -165,7 +167,7 @@ public class VkGame {
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button6, gbc);
+        SkillPanel.add(button6, gbc);
         button7 = new JButton();
         button7.setEnabled(false);
         button7.setPreferredSize(new Dimension(50, 50));
@@ -174,7 +176,7 @@ public class VkGame {
         gbc.gridx = 2;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button7, gbc);
+        SkillPanel.add(button7, gbc);
         button8 = new JButton();
         button8.setEnabled(false);
         button8.setPreferredSize(new Dimension(50, 50));
@@ -183,7 +185,7 @@ public class VkGame {
         gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button8, gbc);
+        SkillPanel.add(button8, gbc);
         button9 = new JButton();
         button9.setEnabled(false);
         button9.setPreferredSize(new Dimension(50, 50));
@@ -192,7 +194,7 @@ public class VkGame {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button9, gbc);
+        SkillPanel.add(button9, gbc);
         button10 = new JButton();
         button10.setEnabled(false);
         button10.setPreferredSize(new Dimension(50, 50));
@@ -201,7 +203,7 @@ public class VkGame {
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button10, gbc);
+        SkillPanel.add(button10, gbc);
         button11 = new JButton();
         button11.setEnabled(false);
         button11.setPreferredSize(new Dimension(50, 50));
@@ -210,7 +212,7 @@ public class VkGame {
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button11, gbc);
+        SkillPanel.add(button11, gbc);
         button12 = new JButton();
         button12.setEnabled(false);
         button12.setPreferredSize(new Dimension(50, 50));
@@ -219,7 +221,7 @@ public class VkGame {
         gbc.gridx = 3;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button12, gbc);
+        SkillPanel.add(button12, gbc);
         button13 = new JButton();
         button13.setEnabled(false);
         button13.setPreferredSize(new Dimension(50, 50));
@@ -228,7 +230,7 @@ public class VkGame {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button13, gbc);
+        SkillPanel.add(button13, gbc);
         button14 = new JButton();
         button14.setEnabled(false);
         button14.setPreferredSize(new Dimension(50, 50));
@@ -237,7 +239,7 @@ public class VkGame {
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button14, gbc);
+        SkillPanel.add(button14, gbc);
         button15 = new JButton();
         button15.setEnabled(false);
         button15.setPreferredSize(new Dimension(50, 50));
@@ -246,7 +248,7 @@ public class VkGame {
         gbc.gridx = 2;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button15, gbc);
+        SkillPanel.add(button15, gbc);
         button16 = new JButton();
         button16.setEnabled(false);
         button16.setPreferredSize(new Dimension(50, 50));
@@ -255,13 +257,55 @@ public class VkGame {
         gbc.gridx = 3;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        statPanel.add(button16, gbc);
-        skillPanel = new JPanel();
-        skillPanel.setLayout(new GridBagLayout());
-        skillPanel.setMaximumSize(new Dimension(300, 2147483647));
-        skillPanel.setMinimumSize(new Dimension(200, 0));
-        skillPanel.setPreferredSize(new Dimension(300, 0));
-        bottomBar.add(skillPanel, BorderLayout.CENTER);
+        SkillPanel.add(button16, gbc);
+        selectedStatPanel = new JPanel();
+        selectedStatPanel.setLayout(new BorderLayout(0, 0));
+        selectedStatPanel.setAlignmentY(0.5f);
+        selectedStatPanel.setMaximumSize(new Dimension(300, 2147483647));
+        selectedStatPanel.setMinimumSize(new Dimension(200, 0));
+        selectedStatPanel.setPreferredSize(new Dimension(300, 0));
+        bottomBar.add(selectedStatPanel, BorderLayout.CENTER);
+        hpBar = new JProgressBar();
+        hpBar.setAlignmentX(0.5f);
+        hpBar.setAlignmentY(0.5f);
+        hpBar.setName("");
+        hpBar.setPreferredSize(new Dimension(219, 20));
+        hpBar.setString("0 / 0");
+        hpBar.setStringPainted(true);
+        selectedStatPanel.add(hpBar, BorderLayout.SOUTH);
+        selectedUnitList = new JList();
+        selectedUnitList.setDoubleBuffered(false);
+        selectedUnitList.setDragEnabled(false);
+        selectedUnitList.setFixedCellHeight(30);
+        selectedUnitList.setFixedCellWidth(30);
+        selectedUnitList.setLayoutOrientation(2);
+        selectedUnitList.setMaximumSize(new Dimension(-1, 90));
+        selectedUnitList.setMinimumSize(new Dimension(30, 30));
+        final DefaultListModel defaultListModel1 = new DefaultListModel();
+        defaultListModel1.addElement("1");
+        defaultListModel1.addElement("2");
+        defaultListModel1.addElement("3");
+        defaultListModel1.addElement("4");
+        defaultListModel1.addElement("5");
+        defaultListModel1.addElement("6");
+        defaultListModel1.addElement("7");
+        defaultListModel1.addElement("8");
+        defaultListModel1.addElement("9");
+        defaultListModel1.addElement("10");
+        defaultListModel1.addElement("11");
+        defaultListModel1.addElement("12");
+        defaultListModel1.addElement("13");
+        selectedUnitList.setModel(defaultListModel1);
+        selectedUnitList.setOpaque(true);
+        selectedUnitList.setPreferredSize(new Dimension(-1, 90));
+        selectedUnitList.setSelectedIndex(0);
+        selectedUnitList.setSelectionMode(0);
+        selectedUnitList.setValueIsAdjusting(false);
+        selectedUnitList.setVisibleRowCount(1);
+        selectedStatPanel.add(selectedUnitList, BorderLayout.NORTH);
+        unitName = new JLabel();
+        unitName.setText("Label");
+        selectedStatPanel.add(unitName, BorderLayout.CENTER);
     }
 
     /**

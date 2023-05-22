@@ -33,6 +33,7 @@ public final class Game {
         private final Rectangle selectionRect = new Rectangle();
 
         private void deselect() {
+            UI.deselect();
             for (GameObject obj : selectedObjects) {
                 localPlayerView.getGameObjectsView().getObjectView(obj).highlight(0);
             }
@@ -67,7 +68,8 @@ public final class Game {
                         if (tile != null && tile.getUnit() != null) {
                             Unit unit = tile.getUnit();
                             selectedObjects.add(unit);
-                            UI.selectObject(unit);
+                            UI.updateSelectedObjects(selectedObjects);
+//                            UI.selectObject(unit);
                             localPlayerView.getGameObjectsView().getObjectView(unit).highlight(1);
                         }
                     }
@@ -108,7 +110,8 @@ public final class Game {
                         GameObject obj = localPlayerView.getObjectByMouseClick(e.getPoint());
                         if (obj != null) {
                             selectedObjects.add(obj);
-                            UI.selectObject(obj);
+                            UI.updateSelectedObjects(selectedObjects);
+//                            UI.selectObject(obj);
                             localPlayerView.getGameObjectsView().getObjectView(obj).highlight(1);
                         }
                     }

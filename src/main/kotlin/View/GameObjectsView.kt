@@ -188,9 +188,17 @@ class GameObjectsView(private val gameMap: GameMap) {
 
     fun update() {
         if (gameObjectsView.size != gameMap.objects.size) {
-            gameObjectsView = gameMap.objects.map { obj ->
-                GameObjectView(obj)
+            val existingViews: Map<GameObject, GameObjectView> = gameObjectsView.associate {
+                it.gameObject to it
             }
+            gameObjectsView = gameMap.objects.map { obj ->
+                existingViews.getOrElse(obj) {
+                    GameObjectView(obj)
+                }
+            }
+//            gameObjectsView = gameMap.objects.map { obj ->
+//                GameObjectView(obj)
+//            }
             this.vertexes = gameObjectsView.flatMap { view ->
                 view.vertexes.flatten()
             }

@@ -64,7 +64,7 @@
               </component>
             </children>
           </grid>
-          <grid id="5ba80" binding="statPanel" layout-manager="GridBagLayout">
+          <grid id="5ba80" binding="SkillPanel" layout-manager="GridBagLayout">
             <constraints border-constraint="East"/>
             <properties>
               <minimumSize width="200" height="92"/>
@@ -251,15 +251,70 @@
               </component>
             </children>
           </grid>
-          <grid id="9ac4f" binding="skillPanel" layout-manager="GridBagLayout">
+          <grid id="9ac4f" binding="selectedStatPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="Center"/>
             <properties>
+              <alignmentY value="0.5"/>
               <maximumSize width="300" height="2147483647"/>
               <minimumSize width="200" height="0"/>
               <preferredSize width="300" height="0"/>
             </properties>
-            <border type="none"/>
-            <children/>
+            <border type="none">
+              <title-color color="-2104859"/>
+              <color color="-2104859"/>
+            </border>
+            <children>
+              <component id="520c7" class="javax.swing.JProgressBar" binding="hpBar">
+                <constraints border-constraint="South"/>
+                <properties>
+                  <alignmentX value="0.5"/>
+                  <alignmentY value="0.5"/>
+                  <name value=""/>
+                  <preferredSize width="219" height="20"/>
+                  <string value="0 / 0"/>
+                  <stringPainted value="true"/>
+                </properties>
+              </component>
+              <component id="54660" class="javax.swing.JList" binding="selectedUnitList">
+                <constraints border-constraint="North"/>
+                <properties>
+                  <doubleBuffered value="false"/>
+                  <dragEnabled value="false"/>
+                  <fixedCellHeight value="30"/>
+                  <fixedCellWidth value="30"/>
+                  <layoutOrientation value="2"/>
+                  <maximumSize width="-1" height="90"/>
+                  <minimumSize width="30" height="30"/>
+                  <model>
+                    <item value="1"/>
+                    <item value="2"/>
+                    <item value="3"/>
+                    <item value="4"/>
+                    <item value="5"/>
+                    <item value="6"/>
+                    <item value="7"/>
+                    <item value="8"/>
+                    <item value="9"/>
+                    <item value="10"/>
+                    <item value="11"/>
+                    <item value="12"/>
+                    <item value="13"/>
+                  </model>
+                  <opaque value="true"/>
+                  <preferredSize width="-1" height="90"/>
+                  <selectedIndex value="0"/>
+                  <selectionMode value="0"/>
+                  <valueIsAdjusting value="false"/>
+                  <visibleRowCount value="1"/>
+                </properties>
+              </component>
+              <component id="d29cf" class="javax.swing.JLabel" binding="unitName">
+                <constraints border-constraint="Center"/>
+                <properties>
+                  <text value="Label"/>
+                </properties>
+              </component>
+            </children>
           </grid>
         </children>
       </grid>

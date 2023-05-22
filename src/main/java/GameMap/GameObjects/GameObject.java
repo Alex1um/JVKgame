@@ -47,6 +47,11 @@ public abstract class GameObject {
 
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
+
     protected GameObject(float maxHealth) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
