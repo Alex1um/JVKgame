@@ -61,5 +61,9 @@ void drawGrass() {
 }
 
 void main() {
-    drawGrass();
+    if (fragTextureIndex < 2) {
+        drawGrass();
+    } else {
+       outColor = texture(sampler2D(textures[fragTextureIndex], texSampler), vertexTexCoord);
+    }
 }
