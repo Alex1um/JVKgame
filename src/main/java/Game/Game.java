@@ -1,5 +1,7 @@
 package Game;
 
+import Controller.Players.LocalPlayer;
+import Controller.Players.Player;
 import Game.Abilities.Ability;
 import Game.Abilities.BasicAbility;
 import Game.Abilities.TargetAbility;
@@ -35,7 +37,9 @@ public final class Game {
         private void deselect() {
             UI.deselect();
             for (GameObject obj : selectedObjects) {
-                localPlayerView.getGameObjectsView().getObjectView(obj).highlight(0);
+                if (gameMap.objects.contains(obj)) {
+                    localPlayerView.getGameObjectsView().getObjectView(obj).highlight(0);
+                }
             }
             selectedObjects.clear();
         }
@@ -135,7 +139,7 @@ public final class Game {
                     } else {
                         // TODO: remove
                         try {
-                            new Necromancer().deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
+                            new Necromancer(localPlayer).deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                         } catch (Throwable err) {
                             System.out.println("Cannot deploy unit house: " + err);
                         }
@@ -240,6 +244,8 @@ public final class Game {
     private final VkFrame UI;
     private final GameMap gameMap;
     private final ArrayList<Action> actions = new ArrayList<>();
+
+    private final Player localPlayer = new LocalPlayer();
 
     public Game(int mapSize, int blockSize) {
         gameMap = new GameMap(mapSize, blockSize);

@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Structures;
 
+import Controller.Players.Player;
 import Game.Actions.Action;
 import Game.Actions.DelayedAction;
 import GameMap.Blocks.Block;
@@ -18,8 +19,8 @@ public abstract class BuildableStructure extends Structure {
 
     private boolean isBuilt = false;
     private final Duration buildTime;
-    protected BuildableStructure(Duration buildTime, float maxHealth, StructureStats stats) {
-        super(maxHealth, stats);
+    protected BuildableStructure(Player player, Duration buildTime, float maxHealth, StructureStats stats) {
+        super(player, maxHealth, stats);
         this.buildTime = buildTime;
     }
 

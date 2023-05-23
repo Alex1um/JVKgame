@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Units;
 
+import Controller.Players.Player;
 import Game.Abilities.AbilityMethod;
 import Game.Abilities.TargetAbilityMethod;
 import Game.Actions.Action;
@@ -29,8 +30,8 @@ public class Unit extends GameObject {
     private Point tilePosition;
     UnitStats stats;
 
-    protected Unit(float maxHealth, UnitStats stats) {
-        super(maxHealth);
+    protected Unit(Player player, float maxHealth, UnitStats stats) {
+        super(player, maxHealth);
         this.stats = stats;
     }
 
@@ -45,9 +46,18 @@ public class Unit extends GameObject {
         if (block.getStructure() == null && tile.getUnit() == null) {
             tile.setUnit(this);
             gameMap.objects.add(this);
+            owner.getUnits().add(this);
         } else {
             throw new Error("Cannot place unit: Tile already occupied " + tilePosition);
         }
+    }
+
+    @Override
+    public void destroy(GameMap gameMap) {
+        Tile tile = gameMap.getTile(this.tilePosition);
+        tile.setUnit(null);
+        gameMap.objects.remove(this);
+        owner.getUnits().remove(this);
     }
 
     class AStarPathfinding2 {
@@ -216,12 +226,8 @@ public class Unit extends GameObject {
                     attackStartTime.plus(stats.attackInterval);
                     attackObject.damage(stats.attack);
                     if (attackObject.getHealth() <= 0) {
-                        gameMap.objects.remove(attackObject);
-                        if (attackObject instanceof Unit) {
-                            gameMap.getTile(((Unit) attackObject).tilePosition).setUnit(null);
-                        } else if (attackObject instanceof Structure) {
-                            gameMap.getBlockByTilePos(((Structure) attackObject).getBlockPosition()).setStructure(null);
-                        }
+                        attackObject.destroy(gameMap);
+                        attackObject = null;
                     }
                 }
             }
@@ -241,11 +247,11 @@ public class Unit extends GameObject {
                     int x = tilePosition.x + i;
                     int y = tilePosition.y + j;
                     Unit unit = gameMap.getTile(x, y).getUnit();
-                    if (unit != null) {
+                    if (unit != null || unit.owner.getGroup() != owner.getGroup()) {
                         return unit;
                     }
                     Structure structure = gameMap.getBlockByTilePos(x, y).getStructure();
-                    if (structure != null) {
+                    if (structure != null && structure.getOwner().getGroup() != owner.getGroup()) {
                         return structure;
                     }
                 }

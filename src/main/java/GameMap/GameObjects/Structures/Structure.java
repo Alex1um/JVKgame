@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Structures;
 
+import Controller.Players.Player;
 import Game.Actions.Action;
 import GameMap.Blocks.Block;
 import GameMap.GameMap;
@@ -9,7 +10,7 @@ import GameMap.Tiles.Tile;
 import java.awt.*;
 import java.util.ArrayList;
 
-public abstract class Structure extends GameObject {
+public class Structure extends GameObject {
 
     public StructureStats stats;
 
@@ -19,9 +20,17 @@ public abstract class Structure extends GameObject {
 
     protected Point blockPosition;
 
-    protected Structure(float maxHealth, StructureStats stats) {
-        super(maxHealth);
+    protected Structure(Player player, float maxHealth, StructureStats stats) {
+        super(player, maxHealth);
         this.stats = stats;
+    }
+
+    @Override
+    public void destroy(GameMap gameMap) {
+        gameMap.objects.remove(this);
+        owner.getStructures().remove(this);
+        Block block = gameMap.getBlockByPos(blockPosition);
+        block.setStructure(null);
     }
 
     public void build(GameMap gameMap, ArrayList<Action> actions, Point blockPosition) {

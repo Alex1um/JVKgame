@@ -1,5 +1,6 @@
 package GameMap.GameObjects;
 
+import Controller.Players.Player;
 import Game.Abilities.*;
 import GameMap.GameMap;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,16 @@ public abstract class GameObject {
         return this.getClass().getSimpleName();
     }
 
-    protected GameObject(float maxHealth) {
+    public Player getOwner() {
+        return owner;
+    }
+
+    protected Player owner;
+
+    public abstract void destroy(GameMap gameMap);
+
+    protected GameObject( Player player, float maxHealth) {
+        this.owner = player;
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         for (Method method : this.getClass().getMethods()) {

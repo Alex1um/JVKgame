@@ -1,5 +1,6 @@
 package GameMap.GameObjects.Structures;
 
+import Controller.Players.Player;
 import Game.Actions.Action;
 import GameMap.GameMap;
 
@@ -8,8 +9,8 @@ import java.util.ArrayList;
 
 public class House extends BuildableStructure {
 
-    public House() {
-        super(Duration.ofSeconds(5), 200, new StructureStats(200, "House"));
+    public House(Player player) {
+        super(player, Duration.ofSeconds(5), 200, new StructureStats(200, "House"));
     }
 
     @Override

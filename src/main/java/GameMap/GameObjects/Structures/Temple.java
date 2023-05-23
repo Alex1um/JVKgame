@@ -1,10 +1,12 @@
 package GameMap.GameObjects.Structures;
 
 
+import Controller.Players.Player;
+
 public class Temple extends Structure {
 
-    public Temple() {
-        super(500, new StructureStats(500, "Temple"));
+    public Temple(Player player) {
+        super(player, 500, new StructureStats(500, "Temple"));
     }
 
 
