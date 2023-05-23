@@ -1,8 +1,10 @@
 package View
 
 import GameMap.GameMap
+import GameMap.Tiles.GoldMineTile
 import GameMap.Tiles.GrassTile
 import GameMap.Tiles.Tile
+import GameMap.Tiles.WaterTile
 import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
 import VkRender.TextureTable
@@ -14,6 +16,8 @@ class GameMapView(gameMap: GameMap) {
 
         private val textureIndex = when (tile) {
             is GrassTile -> TextureTable.tiles["grass"]!!
+            is WaterTile -> TextureTable.tiles["water"]!!
+            is GoldMineTile -> TextureTable.tiles["goldMine"]!!
             else -> -1
         }
 

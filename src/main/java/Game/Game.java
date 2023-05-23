@@ -1,5 +1,6 @@
 package Game;
 
+import Controller.Players.BotPlayer;
 import Controller.Players.LocalPlayer;
 import Controller.Players.Player;
 import Game.Abilities.Ability;
@@ -247,9 +248,20 @@ public final class Game {
 
     private final Player localPlayer = new LocalPlayer();
 
-    public Game(int mapSize, int blockSize) {
+    private final ArrayList<Player> players = new ArrayList(1);
+
+    public Game(int mapSize, int blockSize, int botCount) {
         gameMap = new GameMap(mapSize, blockSize);
-        gameMap.generateRandomMap(System.currentTimeMillis());
+        long seed = System.currentTimeMillis();
+        gameMap.generateRandomMap(seed);
+
+        players.add(localPlayer);
+        for (;botCount > 0; botCount--) {
+            BotPlayer bot = new BotPlayer();
+            players.add(bot);
+        }
+
+        gameMap.initPlayers(seed, players, actions);
 
         ActionListener abilityButtonsListener = new SkillTablebutton();
         localPlayerView = new LocalPlayerView(gameMap, new Point(0, 0));

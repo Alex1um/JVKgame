@@ -22,7 +22,9 @@ object TextureTable {
     ).withIndex().associateBy ({ it.value }, { it.index + units.size })
 
     val tiles = arrayOf(
-        "grass"
+        "water",
+        "grass",
+        "goldMine"
     ).withIndex().associateBy ({ it.value }, { it.index })
 
     val objects = units + structures

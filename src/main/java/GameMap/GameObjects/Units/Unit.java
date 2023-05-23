@@ -141,12 +141,11 @@ public class Unit extends GameObject {
         }
 
         public void moveOneStep(GameMap gameMap) {
-            traveled += stats.speedTilesPerFrame * gameMap.getTile(tilePosition).getMSFactor();
+            Point next = path.get(tilePosition);
+            if (next == null)
+                return;
+            traveled += stats.speedTilesPerFrame * gameMap.getTile(next).getMSFactor();
             for (int i = (int) traveled; i > 0; i--) {
-                Point next = path.get(tilePosition);
-                if (next == null) {
-                    return;
-                }
                 if (gameMap.isTilePositionFree(next)) {
                     Tile newTile = gameMap.getTile(next);
                     Tile oldTile = gameMap.getTile(tilePosition);
@@ -247,7 +246,7 @@ public class Unit extends GameObject {
                     int x = tilePosition.x + i;
                     int y = tilePosition.y + j;
                     Unit unit = gameMap.getTile(x, y).getUnit();
-                    if (unit != null || unit.owner.getGroup() != owner.getGroup()) {
+                    if (unit != null && unit.owner.getGroup() != owner.getGroup()) {
                         return unit;
                     }
                     Structure structure = gameMap.getBlockByTilePos(x, y).getStructure();

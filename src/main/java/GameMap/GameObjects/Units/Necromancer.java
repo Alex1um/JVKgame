@@ -18,7 +18,7 @@ public class Necromancer extends Unit {
         super(player, 500, new UnitStats(.1f, 5, 1, Duration.ofMillis(1500), 1));
     }
 
-    @BasicAbilityMethod(name = "Summon slave!")
+    @BasicAbilityMethod(name = "Summon zombie!")
     public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
         Point summonPoint = gameMap.getFreeTilePos(this.getTilePosition(), this.spawnMaxRadius);
         if (summonPoint != null) {
