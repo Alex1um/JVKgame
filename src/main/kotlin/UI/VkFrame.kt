@@ -1,5 +1,6 @@
 package UI
 
+import Controller.Players.Player
 import Frame.VkGame
 import GameMap.GameObjects.GameObject
 import View.LocalPlayerView
@@ -64,6 +65,10 @@ class VkFrame(
 
     fun repaintCanvas() {
         canvas.repaint()
+    }
+
+    fun updateMoney(player: Player) {
+        content.moneyLabel.text = player.money.toString()
     }
 
     fun updateSelectedObjects(objects: List<GameObject>) {

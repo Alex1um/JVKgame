@@ -70,7 +70,7 @@ public final class Game {
                 for (int y = p1.y; y != p2.y; y += incY) {
                     for (int x = p1.x; x != p2.x; x += incX) {
                         Tile tile = gameMap.getTile(x, y);
-                        if (tile != null && tile.getUnit() != null) {
+                        if (tile != null && tile.getUnit() != null && tile.getUnit().getOwner() == localPlayer) {
                             Unit unit = tile.getUnit();
                             selectedObjects.add(unit);
                             UI.updateSelectedObjects(selectedObjects);
@@ -113,10 +113,9 @@ public final class Game {
                     } else {
                         deselect();
                         GameObject obj = localPlayerView.getObjectByMouseClick(e.getPoint());
-                        if (obj != null) {
+                        if (obj != null && obj.getOwner() == localPlayer) {
                             selectedObjects.add(obj);
                             UI.updateSelectedObjects(selectedObjects);
-//                            UI.selectObject(obj);
                             localPlayerView.getGameObjectsView().getObjectView(obj).highlight(1);
                         }
                     }
@@ -136,13 +135,6 @@ public final class Game {
                             if (obj instanceof Unit) {
                                 obj.getAbilities().get("move").use(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
                             }
-                        }
-                    } else {
-                        // TODO: remove
-                        try {
-                            new Necromancer(localPlayer).deploy(gameMap, actions, localPlayerView.getTilePositionByClick(e.getPoint()));
-                        } catch (Throwable err) {
-                            System.out.println("Cannot deploy unit house: " + err);
                         }
                     }
                 }
@@ -296,6 +288,6 @@ public final class Game {
         actions.addAll(newActions);
 
         UI.repaintCanvas();
-
+        UI.updateMoney(localPlayer);
     }
 }

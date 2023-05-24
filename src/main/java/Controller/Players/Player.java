@@ -7,6 +7,27 @@ import java.util.ArrayList;
 
 abstract public class Player {
 
+    public int getMoney() {
+        return money;
+    }
+
+    public void takeMoney(int count) throws Exception {
+        if (count > money) throw new Exception("Not enough money");
+        money -= count;
+    }
+
+    public boolean takeMoneyIfCan(int count) {
+        if (count > money) return false;
+        money -= count;
+        return true;
+    }
+
+    public void addMoney(int count) {
+        money += count;
+    }
+
+    int money = 500;
+
     public int getGroup() {
         return group;
     }

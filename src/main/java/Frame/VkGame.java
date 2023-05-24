@@ -1,6 +1,9 @@
 package Frame;
 
 import VkRender.VkCanvas;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +38,7 @@ public class VkGame {
     public JProgressBar hpBar;
     public JList selectedUnitList;
     public JLabel unitName;
+    public JLabel moneyLabel;
 
     public JButton[] skillTable;
 
@@ -74,12 +78,18 @@ public class VkGame {
         mainPanel.setLayout(new BorderLayout(0, 0));
         mainPanel.setName("mainPanel");
         topBar = new JPanel();
-        topBar.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        topBar.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         topBar.setMaximumSize(new Dimension(2147483647, 20));
         topBar.setMinimumSize(new Dimension(24, 20));
         topBar.setName("");
         topBar.setPreferredSize(new Dimension(24, 20));
         mainPanel.add(topBar, BorderLayout.NORTH);
+        moneyLabel = new JLabel();
+        moneyLabel.setText("0");
+        moneyLabel.setToolTipText("Money");
+        topBar.add(moneyLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        topBar.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         canvasPanel = new JPanel();
         canvasPanel.setLayout(new BorderLayout(0, 0));
         canvasPanel.setMinimumSize(new Dimension(600, 400));

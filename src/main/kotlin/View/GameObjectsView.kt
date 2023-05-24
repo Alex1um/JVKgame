@@ -8,6 +8,7 @@ import GameMap.GameObjects.Structures.Temple
 import GameMap.GameObjects.Units.Necromancer
 import GameMap.GameObjects.Units.Zombie
 import GameMap.GameObjects.Units.Unit
+import GameMap.GameObjects.Units.Worker
 import VkRender.Config
 import VkRender.GPUObjects.GameMapVertex
 import VkRender.GPUObjects.HealthBarVertex
@@ -83,6 +84,7 @@ class GameObjectsView(private val gameMap: GameMap) {
             is Zombie -> TextureTable.units["zombie"]!!
             is Temple -> TextureTable.structures["temple"]!!
             is House -> TextureTable.structures[if (gameObject.isBuilt) "house" else "houseConstructing"]!!
+            is Worker -> TextureTable.units["worker"]!!
             else -> -1
         }
 

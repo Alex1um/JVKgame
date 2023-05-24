@@ -6,6 +6,7 @@ import Game.Abilities.BasicAbilityMethod;
 import Game.Actions.Action;
 import GameMap.GameMap;
 import GameMap.GameObjects.Units.Necromancer;
+import GameMap.GameObjects.Units.Worker;
 import GameMap.GameObjects.Units.Zombie;
 
 import java.awt.*;
@@ -18,15 +19,17 @@ public class Temple extends Structure {
     }
 
 
-    @BasicAbilityMethod(name = "Summon necr!")
-    public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
+    @BasicAbilityMethod(name = "Summon worker")
+    public void summonWorker(GameMap gameMap, ArrayList<Action> actions) throws Exception {
+
         Point center = new Point(
                 blockPosition.x * gameMap.getBlockSizeTiles() + gameMap.getBlockSizeTiles() / 2,
                 blockPosition.y * gameMap.getBlockSizeTiles() + gameMap.getBlockSizeTiles() / 2
                 );
         Point summonPoint = gameMap.getFreeTilePos(center, gameMap.getBlockSizeTiles(), gameMap.getBlockSizeTiles());
         if (summonPoint != null) {
-            new Necromancer(owner).deploy(gameMap, actions, summonPoint);
+            owner.takeMoney(50);
+            new Worker(owner).deploy(gameMap, actions, summonPoint);
         } else {
             throw new Exception("cannot summon unit: no empty space");
         }

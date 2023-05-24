@@ -163,12 +163,12 @@ public class Unit extends GameObject {
         }
     }
 
-    private final AStarPathfinding2 pathing = new AStarPathfinding2();
+    protected final AStarPathfinding2 pathing = new AStarPathfinding2();
 
-    private final Action movingAction = new Action(pathing::moveActionF);
-    private final Action attackAction = new Action(this::attackMove);
+    protected final Action movingAction = new Action(pathing::moveActionF);
+    protected final Action attackAction = new Action(this::attackMove);
     @Nullable
-    private Action currentAction = null;
+    protected Action currentAction = null;
     @TargetAbilityMethod(name = "move")
     public void move(GameMap gameMap, ArrayList<Action> actions, Point destination) {
 //        Point destination = (Point) args[0];
@@ -182,7 +182,7 @@ public class Unit extends GameObject {
     }
 
     @Nullable
-    private GameObject attackObject = null;
+    protected GameObject attackObject = null;
 
     @Nullable
     private Instant attackStartTime = null;
@@ -201,15 +201,16 @@ public class Unit extends GameObject {
             if (attackObject instanceof Unit) {
                 targetPos = ((Unit) attackObject).tilePosition;
             } else if (attackObject instanceof Structure) {
-                targetPos = new Point(((Structure) attackObject).getBlockPosition());
-                targetPos.x *= gameMap.getBlockSizeTiles();
-                targetPos.y *= gameMap.getBlockSizeTiles();
-                if (tilePosition.y > targetPos.y) {
-                    targetPos.y += gameMap.getBlockSizeTiles();
-                }
-                if (tilePosition.x > targetPos.x) {
-                    targetPos.x += gameMap.getBlockSizeTiles();
-                }
+                targetPos = gameMap.getBlocksClosestTilePos(((Structure) attackObject).getBlockPosition(), tilePosition);
+//                targetPos = new Point(((Structure) attackObject).getBlockPosition());
+//                targetPos.x *= gameMap.getBlockSizeTiles();
+//                targetPos.y *= gameMap.getBlockSizeTiles();
+//                if (tilePosition.y > targetPos.y) {
+//                    targetPos.y += gameMap.getBlockSizeTiles();
+//                }
+//                if (tilePosition.x > targetPos.x) {
+//                    targetPos.x += gameMap.getBlockSizeTiles();
+//                }
             }
             int distance = Math.abs(tilePosition.y - targetPos.y) + Math.abs(tilePosition.x - targetPos.x);
             if (distance > stats.attackRange) {

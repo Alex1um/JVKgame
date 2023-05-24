@@ -22,6 +22,7 @@ public class Necromancer extends Unit {
     public void summonSlave(GameMap gameMap, ArrayList<Action> actions) throws Exception {
         Point summonPoint = gameMap.getFreeTilePos(this.getTilePosition(), this.spawnMaxRadius);
         if (summonPoint != null) {
+            owner.takeMoney(10);
             new Zombie(owner).deploy(gameMap, actions, summonPoint);
         } else {
             throw new Exception("cannot summon unit: no empty space");

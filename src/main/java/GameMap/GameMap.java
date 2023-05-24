@@ -249,4 +249,25 @@ public class GameMap {
     public GameObject getObjectByTilePos(Point pos) {
         return getObjectByTilePos(pos.x, pos.y);
     }
+
+    public Point getBlocksClosestTilePos(Point blockPos, Point sourcePos) {
+        Point targetPos = new Point(blockPos);
+        targetPos.x *= this.getBlockSizeTiles();
+        targetPos.y *= this.getBlockSizeTiles();
+        if (sourcePos.y > targetPos.y) {
+            targetPos.y += this.getBlockSizeTiles();
+        } else {
+//            targetPos.y -= 1;
+        }
+        if (sourcePos.x > targetPos.x) {
+            targetPos.x += this.getBlockSizeTiles();
+        } else {
+//            targetPos.x -= 1;
+        }
+        return targetPos;
+    }
+
+    public int getDistance(Point source, Point dest) {
+        return Math.abs(source.x - dest.x) + Math.abs(source.y - dest.y);
+    }
 }

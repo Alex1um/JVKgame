@@ -10,6 +10,7 @@ val lwjglVersion = "3.3.1"
 val `lwjgl3-awtVersion` = "0.1.8"
 val jomlVersion = "1.10.5"
 val lwjglNatives = "natives-linux"
+val formsVersion = "7.0.3"
 
 repositories {
     mavenCentral()
@@ -35,6 +36,7 @@ dependencies {
     implementation("org.lwjglx", "lwjgl3-awt", `lwjgl3-awtVersion`)
     implementation("org.joml", "joml", jomlVersion)
     implementation(kotlin("reflect"))
+    implementation("com.intellij", "forms_rt", formsVersion)
 
 }
 
